@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Receipts – GUB Family</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    .receipts-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    @media (min-width: 480px) {
+      .receipts-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+
+    .receipt-card {
+      background: var(--white);
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      box-shadow: var(--shadow-hard-sm);
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform 100ms, box-shadow 100ms;
+      text-decoration: none;
+      color: var(--fg);
+      display: block;
+    }
+
+    .receipt-card:hover {
+      transform: translate(2px, 2px) rotate(-1deg);
+      box-shadow: none;
+    }
+
+    .receipt-card__thumb {
+      width: 100%;
+      aspect-ratio: 3/4;
+      background: var(--muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      border-bottom: 2px solid var(--border);
+      overflow: hidden;
+    }
+
+    .receipt-card__body {
+      padding: 10px;
+    }
+
+    .receipt-card__name {
+      font-size: 0.85rem;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .receipt-card__meta {
+      font-size: 0.72rem;
+      opacity: 0.5;
+      margin-top: 2px;
+    }
+
+    .receipt-card__amount {
+      font-family: var(--font-head);
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--accent);
+      margin-top: 4px;
+    }
+
+    /* Filter bar */
+    .filter-bar {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+      margin-bottom: 16px;
+      scrollbar-width: none;
+    }
+
+    .filter-bar::-webkit-scrollbar { display: none; }
+
+    .filter-chip {
+      flex-shrink: 0;
+      padding: 6px 14px;
+      border: 2px solid var(--border);
+      border-radius: 99px;
+      background: var(--white);
+      font-family: var(--font-body);
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: var(--shadow-hard-sm);
+      transition: background 80ms, color 80ms, transform 80ms;
+    }
+
+    .filter-chip.active,
+    .filter-chip:hover {
+      background: var(--fg);
+      color: var(--white);
+      transform: translate(1px,1px);
+      box-shadow: none;
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="nav" style="max-width: var(--max-w); margin: 0 auto;">
+    <button class="nav__back" onclick="window.location.href='expenses.html'">←</button>
+    <span class="nav__title">🧾 Receipts</span>
+    <div class="nav__avatar" id="navAvatar"></div>
+  </nav>
+
+  <div class="page">
+    <div style="margin-bottom:16px;">
+      <p class="section-label">All uploaded receipts</p>
+      <h1 class="section-title">Receipts</h1>
+    </div>
+
+    <!-- Filter chips -->
+    <div class="filter-bar" id="filterBar">
+      <button class="filter-chip active" data-payer="all">All</button>
+      <button class="filter-chip" data-payer="Gian">Gian</button>
+      <button class="filter-chip" data-payer="Eunice">Eunice</button>
+      <button class="filter-chip" data-payer="Jacob">Jacob</button>
+      <button class="filter-chip" data-payer="Mama">Mama</button>
+    </div>
+
+    <div class="receipts-grid" id="receiptsGrid">
+      <div class="spinner" style="grid-column:1/-1;"></div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { requireAuth } from './js/auth.js';
+    import { db } from './js/firebase.js';
+    import { collection, getDocs, query, orderBy, where } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+    import { formatPeso } from './js/utils.js';
+
+    const user = requireAuth();
+    if (!user) throw new Error('No auth');
+
+    const avatar = document.getElementById('navAvatar');
+    avatar.textContent = user.name[0];
+    avatar.style.background = user.color;
+    avatar.style.color = user.textColor;
+
+    let allReceipts = [];
+    let activePayer = 'all';
+
+    async function loadReceipts() {
+      const snap = await getDocs(collection(db,'expenses'));
+      allReceipts = snap.docs
+        .map(d => ({ id: d.id, ...d.data() }))
+        .filter(e => e.receiptBase64)
+        .sort((a,b) => b.createdAt?.localeCompare(a.createdAt || '') || 0);
+      renderReceipts();
+    }
+
+    function renderReceipts() {
+      const filtered = activePayer === 'all'
+        ? allReceipts
+        : allReceipts.filter(e => e.paidBy === activePayer);
+
+      const grid = document.getElementById('receiptsGrid');
+
+      if (!filtered.length) {
+        grid.innerHTML = `<div class="empty" style="grid-column:1/-1;"><div class="empty__icon">📭</div><div class="empty__text">No receipts${activePayer !== 'all' ? ' for '+activePayer : ''} yet.</div></div>`;
+        return;
+      }
+
+      grid.innerHTML = filtered.map(e => `
+        <div class="receipt-card" onclick="openReceipt('${e.id}')">
+          <div class="receipt-card__thumb">
+            <img src="${e.receiptBase64}" alt="Receipt" style="width:100%;height:100%;object-fit:cover;" />
+          </div>
+          <div class="receipt-card__body">
+            <div class="receipt-card__name">${e.name}</div>
+            <div class="receipt-card__meta">${e.paidBy || '—'} · ${e.date || '—'}</div>
+            ${e.where ? `<div class="receipt-card__meta">${e.where}</div>` : ''}
+            <div class="receipt-card__amount">${formatPeso(e.amount)}</div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Open receipt image in new tab
+    window.openReceipt = function(id) {
+      const receipt = allReceipts.find(r => r.id === id);
+      if (!receipt?.receiptBase64) return;
+      const win = window.open();
+      const img = win.document.createElement('img');
+      img.src = receipt.receiptBase64;
+      img.style.cssText = 'max-width:100%;max-height:100vh;object-fit:contain;display:block;margin:auto;';
+      win.document.body.style.cssText = 'margin:0;background:#111;display:flex;align-items:center;justify-content:center;min-height:100vh;';
+      win.document.title = 'Receipt – ' + receipt.name;
+      win.document.body.appendChild(img);
+    };
+
+    // Filter chips
+    document.getElementById('filterBar').addEventListener('click', e => {
+      const chip = e.target.closest('.filter-chip');
+      if (!chip) return;
+      document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      activePayer = chip.dataset.payer;
+      renderReceipts();
+    });
+
+    loadReceipts();
+  </script>
+</body>
+</html>

@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard – GUB Family</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    /* ── Greeting ───────────────────────────────────── */
+    .greeting {
+      margin-bottom: 24px;
+    }
+
+    .greeting__label {
+      font-size: 0.85rem;
+      opacity: 0.45;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .greeting__name {
+      font-family: var(--font-head);
+      font-size: 2rem;
+      font-weight: 700;
+      line-height: 1.1;
+    }
+
+    .greeting__date {
+      font-size: 0.9rem;
+      opacity: 0.5;
+      margin-top: 4px;
+    }
+
+    /* ── Agenda block ────────────────────────────────── */
+    .agenda-block { margin-bottom: 24px; }
+
+    .agenda-block__header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    /* ── Event item ──────────────────────────────────── */
+    .event-item {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      padding: 12px 0;
+      border-bottom: 1.5px dashed var(--muted);
+    }
+
+    .event-item:last-child { border-bottom: none; }
+
+    .event-item__time {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--fg);
+      opacity: 0.55;
+      min-width: 54px;
+      padding-top: 2px;
+      white-space: nowrap;
+    }
+
+    .event-item__dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--accent);
+      border: 2px solid var(--border);
+      flex-shrink: 0;
+      margin-top: 5px;
+    }
+
+    .event-item__body { flex: 1; min-width: 0; }
+
+    .event-item__title {
+      font-size: 1rem;
+      font-weight: 600;
+      word-break: break-word;
+    }
+
+    .event-item__meta {
+      font-size: 0.8rem;
+      opacity: 0.5;
+      margin-top: 2px;
+    }
+
+    /* ── Bills block ─────────────────────────────────── */
+    .bill-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 0;
+      border-bottom: 1.5px dashed var(--muted);
+      gap: 8px;
+    }
+
+    .bill-item:last-child { border-bottom: none; }
+
+    .bill-item__info { flex: 1; min-width: 0; }
+
+    .bill-item__name {
+      font-size: 0.95rem;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .bill-item__due {
+      font-size: 0.78rem;
+      opacity: 0.5;
+      margin-top: 2px;
+    }
+
+    .bill-item__amount {
+      font-family: var(--font-head);
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--accent);
+      white-space: nowrap;
+    }
+
+    .bill-item__overdue .bill-item__due { color: var(--accent); opacity: 1; font-weight: 700; }
+
+    /* ── Quick actions ───────────────────────────────── */
+    .quick-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 24px;
+    }
+
+    .quick-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      padding: 20px 12px;
+      background: var(--white);
+      border: 2px solid var(--border);
+      border-radius: var(--radius-wobbly-md);
+      box-shadow: var(--shadow-hard);
+      cursor: pointer;
+      transition: transform 100ms, box-shadow 100ms;
+      text-decoration: none;
+      color: var(--fg);
+    }
+
+    .quick-btn:hover {
+      transform: translate(2px, 2px) rotate(-1deg);
+      box-shadow: var(--shadow-hard-sm);
+    }
+
+    .quick-btn:active {
+      transform: translate(4px, 4px);
+      box-shadow: none;
+    }
+
+    .quick-btn__icon {
+      font-size: 2rem;
+    }
+
+    .quick-btn__label {
+      font-family: var(--font-head);
+      font-size: 1rem;
+      font-weight: 700;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Nav -->
+  <nav class="nav" style="max-width: var(--max-w); margin: 0 auto;">
+    <span class="nav__title">🏠 GUB</span>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <button class="nav__back" id="switchBtn" title="Switch profile" style="border:none;background:none;font-size:1.2rem;">🔄</button>
+      <div class="nav__avatar" id="navAvatar"></div>
+    </div>
+  </nav>
+
+  <div class="page">
+    <!-- Greeting -->
+    <div class="greeting">
+      <p class="greeting__label">Good to see you,</p>
+      <h1 class="greeting__name" id="greetingName">—</h1>
+      <p class="greeting__date" id="greetingDate">—</p>
+    </div>
+
+    <!-- Today's Agenda -->
+    <div class="agenda-block">
+      <div class="agenda-block__header">
+        <h2 class="section-title" style="margin-bottom:0;">📅 Today's Agenda</h2>
+      </div>
+      <div class="card" id="todayCard">
+        <div class="spinner"></div>
+      </div>
+    </div>
+
+    <!-- Tomorrow's Agenda -->
+    <div class="agenda-block">
+      <div class="agenda-block__header">
+        <h2 class="section-title" style="margin-bottom:0;">🌅 Tomorrow</h2>
+      </div>
+      <div class="card card--muted" id="tomorrowCard">
+        <div class="spinner"></div>
+      </div>
+    </div>
+
+    <!-- Due Bills -->
+    <div class="agenda-block" id="billsBlock">
+      <h2 class="section-title">⚠️ Upcoming Bills</h2>
+      <div class="card card--yellow" id="billsCard">
+        <div class="spinner"></div>
+      </div>
+    </div>
+
+    <!-- Quick actions -->
+    <div class="quick-actions">
+      <a href="calendar.html" class="quick-btn">
+        <span class="quick-btn__icon">🗓️</span>
+        <span class="quick-btn__label">View Calendar</span>
+      </a>
+      <a href="expenses.html" class="quick-btn">
+        <span class="quick-btn__icon">💰</span>
+        <span class="quick-btn__label">View Expenses</span>
+      </a>
+    </div>
+  </div>
+
+  <script type="module">
+    import { requireAuth } from './js/auth.js';
+    import { db } from './js/firebase.js';
+    import { collection, query, where, getDocs, orderBy } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+    import { todayKey, tomorrowKey, formatTime, formatDateLong, formatPeso } from './js/utils.js';
+
+    const user = requireAuth();
+    if (!user) throw new Error('No auth');
+
+    // Nav
+    const avatar = document.getElementById('navAvatar');
+    avatar.textContent = user.name[0];
+    avatar.style.background = user.color;
+    avatar.style.color = user.textColor;
+
+    document.getElementById('switchBtn').addEventListener('click', () => {
+      sessionStorage.removeItem('gub_user');
+      window.location.href = 'index.html';
+    });
+
+    // Greeting
+    document.getElementById('greetingName').textContent = user.name + '! 👋';
+    document.getElementById('greetingDate').textContent = formatDateLong(todayKey());
+
+    // Render events list
+    function renderEvents(events, container) {
+      if (!events.length) {
+        container.innerHTML = `
+          <div class="empty">
+            <div class="empty__icon">✨</div>
+            <div class="empty__text">Nothing scheduled — enjoy the free time!</div>
+          </div>`;
+        return;
+      }
+      // Sort by time
+      events.sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+      container.innerHTML = events.map(e => `
+        <div class="event-item">
+          <div class="event-item__time">${e.time ? formatTime(e.time) : 'All day'}</div>
+          <div class="event-item__dot"></div>
+          <div class="event-item__body">
+            <div class="event-item__title">${e.title}</div>
+            ${e.where || e.withWho ? `<div class="event-item__meta">${[e.where, e.withWho ? 'with ' + e.withWho : ''].filter(Boolean).join(' · ')}</div>` : ''}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    async function loadAgenda() {
+      const today = todayKey();
+      const tomorrow = tomorrowKey();
+      const col = collection(db, 'events');
+
+      const [tSnap, tmSnap] = await Promise.all([
+        getDocs(query(col, where('date', '==', today), orderBy('time'))),
+        getDocs(query(col, where('date', '==', tomorrow), orderBy('time'))),
+      ]);
+
+      const toEvents = e => ({ id: e.id, ...e.data() });
+      renderEvents(tSnap.docs.map(toEvents), document.getElementById('todayCard'));
+      renderEvents(tmSnap.docs.map(toEvents), document.getElementById('tomorrowCard'));
+    }
+
+    async function loadBills() {
+      const col = collection(db, 'bills');
+      const snap = await getDocs(col);
+      const bills = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+        .filter(b => !b.paid)
+        .sort((a, b) => (a.dueDate || '').localeCompare(b.dueDate || ''));
+
+      const container = document.getElementById('billsCard');
+      const block = document.getElementById('billsBlock');
+
+      if (!bills.length) {
+        block.style.display = 'none';
+        return;
+      }
+
+      const today = todayKey();
+      container.innerHTML = bills.map(b => {
+        const isOverdue = b.dueDate && b.dueDate < today;
+        return `
+          <div class="bill-item ${isOverdue ? 'bill-item__overdue' : ''}">
+            <div class="bill-item__info">
+              <div class="bill-item__name">${b.name}</div>
+              <div class="bill-item__due">${isOverdue ? '⚠️ Overdue — ' : '📅 Due '}${formatDateLong(b.dueDate)}</div>
+            </div>
+            <div class="bill-item__amount">${formatPeso(b.amount)}</div>
+          </div>`;
+      }).join('');
+    }
+
+    loadAgenda().catch(console.error);
+    loadBills().catch(console.error);
+  </script>
+</body>
+</html>

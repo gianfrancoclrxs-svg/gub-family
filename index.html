@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GUB Family</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100dvh;
+    }
+
+    .picker {
+      width: 100%;
+      max-width: 480px;
+      padding: 32px 24px;
+      text-align: center;
+    }
+
+    .picker__eyebrow {
+      font-family: var(--font-body);
+      font-size: 0.85rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      opacity: 0.45;
+      margin-bottom: 8px;
+    }
+
+    .picker__title {
+      font-family: var(--font-head);
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+      line-height: 1.1;
+    }
+
+    .picker__subtitle {
+      font-size: 1rem;
+      opacity: 0.55;
+      margin-bottom: 48px;
+    }
+
+    .profiles {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 32px;
+    }
+
+    .profile-btn {
+      background: var(--white);
+      border: 2px solid var(--border);
+      border-radius: var(--radius-wobbly-md);
+      box-shadow: var(--shadow-hard);
+      padding: 28px 16px 22px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      cursor: pointer;
+      transition: transform 100ms ease, box-shadow 100ms ease;
+      position: relative;
+      overflow: visible;
+    }
+
+    .profile-btn:hover {
+      transform: translate(2px, 2px) rotate(1deg);
+      box-shadow: var(--shadow-hard-sm);
+    }
+
+    .profile-btn:active {
+      transform: translate(4px, 4px) rotate(0deg);
+      box-shadow: none;
+    }
+
+    .profile-btn--gian   { --col: var(--profile-gian);   --txt: #2d2d2d; }
+    .profile-btn--jacob  { --col: var(--profile-jacob);  --txt: #ffffff; }
+    .profile-btn--eunice { --col: var(--profile-eunice); --txt: #ffffff; }
+    .profile-btn--mama   { --col: var(--profile-mama);   --txt: #ffffff; }
+
+    .profile-btn__avatar {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background: var(--col);
+      color: var(--txt);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-head);
+      font-size: 1.75rem;
+      font-weight: 700;
+      border: 2px solid var(--border);
+      box-shadow: var(--shadow-hard-sm);
+      flex-shrink: 0;
+    }
+
+    .profile-btn__name {
+      font-family: var(--font-head);
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--fg);
+    }
+
+    /* Decorative tape strip */
+    .profile-btn__tape {
+      position: absolute;
+      top: -10px;
+      left: 50%;
+      transform: translateX(-50%) rotate(-2deg);
+      width: 48px;
+      height: 18px;
+      background: rgba(200, 195, 185, 0.6);
+      border-radius: 3px;
+      border: 1px solid rgba(45,45,45,0.15);
+    }
+
+    .profile-btn:nth-child(2) .profile-btn__tape { transform: translateX(-50%) rotate(2deg); }
+    .profile-btn:nth-child(3) .profile-btn__tape { transform: translateX(-50%) rotate(1deg); }
+    .profile-btn:nth-child(4) .profile-btn__tape { transform: translateX(-50%) rotate(-1deg); }
+
+    .picker__footer {
+      font-size: 0.8rem;
+      opacity: 0.35;
+    }
+
+    /* dashed decorative line under title */
+    .picker__deco {
+      width: 60px;
+      height: 3px;
+      border-top: 3px dashed var(--muted);
+      margin: 12px auto 40px;
+      border-radius: 2px;
+    }
+  </style>
+</head>
+<body>
+  <div class="picker">
+    <p class="picker__eyebrow">GUB Family App</p>
+    <h1 class="picker__title">Who's using<br>the app? 👋</h1>
+    <div class="picker__deco"></div>
+
+    <div class="profiles">
+      <button class="profile-btn profile-btn--gian"   data-key="gian">
+        <div class="profile-btn__tape"></div>
+        <div class="profile-btn__avatar">G</div>
+        <span class="profile-btn__name">Gian</span>
+      </button>
+
+      <button class="profile-btn profile-btn--eunice" data-key="eunice">
+        <div class="profile-btn__tape"></div>
+        <div class="profile-btn__avatar">E</div>
+        <span class="profile-btn__name">Eunice</span>
+      </button>
+
+      <button class="profile-btn profile-btn--jacob"  data-key="jacob">
+        <div class="profile-btn__tape"></div>
+        <div class="profile-btn__avatar">J</div>
+        <span class="profile-btn__name">Jacob</span>
+      </button>
+
+      <button class="profile-btn profile-btn--mama"   data-key="mama">
+        <div class="profile-btn__tape"></div>
+        <div class="profile-btn__avatar">M</div>
+        <span class="profile-btn__name">Mama</span>
+      </button>
+    </div>
+
+    <p class="picker__footer">Tap your name to enter ✏️</p>
+  </div>
+
+  <script type="module">
+    import { setUser } from './js/auth.js';
+
+    document.querySelectorAll('.profile-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const key = btn.dataset.key;
+        setUser(key);
+        window.location.href = 'dashboard.html';
+      });
+    });
+  </script>
+</body>
+</html>

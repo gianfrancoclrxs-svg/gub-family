@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Expenses – GUB Family</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    /* ── Total card ─────────────────────────────────── */
+    .total-card {
+      background: var(--fg);
+      color: var(--white);
+      border: 2px solid var(--border);
+      border-radius: var(--radius-wobbly-md);
+      box-shadow: var(--shadow-hard-lg);
+      padding: 24px 20px;
+      margin-bottom: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .total-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px);
+      background-size: 18px 18px;
+    }
+
+    .total-card__label {
+      font-size: 0.8rem;
+      opacity: 0.6;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 6px;
+    }
+
+    .total-card__amount {
+      font-family: var(--font-head);
+      font-size: 2.6rem;
+      font-weight: 700;
+      line-height: 1;
+      margin-bottom: 16px;
+    }
+
+    .total-card__per-person {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .person-pill {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 99px;
+      padding: 4px 10px 4px 6px;
+      font-size: 0.78rem;
+      font-weight: 600;
+    }
+
+    .person-pill__dot {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.6rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    /* ── Section tabs ────────────────────────────────── */
+    .tabs {
+      display: flex;
+      gap: 0;
+      border: 2px solid var(--border);
+      border-radius: var(--radius-wobbly-sm);
+      overflow: hidden;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow-hard-sm);
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 10px 8px;
+      background: var(--white);
+      border: none;
+      border-right: 2px solid var(--border);
+      font-family: var(--font-body);
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 100ms, color 100ms;
+    }
+
+    .tab-btn:last-child { border-right: none; }
+
+    .tab-btn.active {
+      background: var(--fg);
+      color: var(--white);
+    }
+
+    /* ── Expense item ────────────────────────────────── */
+    .expense-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 14px 0;
+      border-bottom: 1.5px dashed var(--muted);
+    }
+
+    .expense-item:last-child { border-bottom: none; }
+
+    .expense-item__icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--muted);
+      border: 2px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      flex-shrink: 0;
+    }
+
+    .expense-item__body { flex: 1; min-width: 0; }
+
+    .expense-item__name {
+      font-size: 1rem;
+      font-weight: 600;
+      word-break: break-word;
+    }
+
+    .expense-item__meta {
+      font-size: 0.78rem;
+      opacity: 0.5;
+      margin-top: 2px;
+    }
+
+    .expense-item__right {
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    .expense-item__amount {
+      font-family: var(--font-head);
+      font-size: 1rem;
+      font-weight: 700;
+    }
+
+    .expense-item__payer {
+      font-size: 0.72rem;
+      opacity: 0.5;
+      margin-top: 2px;
+    }
+
+    .expense-item__delete {
+      background: none;
+      border: none;
+      font-size: 0.9rem;
+      opacity: 0.3;
+      cursor: pointer;
+      padding: 0;
+      margin-top: 2px;
+      transition: opacity 100ms;
+    }
+
+    .expense-item__delete:hover { opacity: 1; color: var(--accent); }
+
+    /* ── Bill item ───────────────────────────────────── */
+    .bill-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 0;
+      border-bottom: 1.5px dashed var(--muted);
+    }
+
+    .bill-row:last-child { border-bottom: none; }
+
+    .bill-row__body { flex: 1; min-width: 0; }
+
+    .bill-row__name {
+      font-size: 1rem;
+      font-weight: 600;
+    }
+
+    .bill-row__due {
+      font-size: 0.78rem;
+      opacity: 0.5;
+      margin-top: 2px;
+    }
+
+    .bill-row__due.overdue { color: var(--accent); opacity: 1; font-weight: 700; }
+
+    .bill-row__amount {
+      font-family: var(--font-head);
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--accent);
+      white-space: nowrap;
+    }
+
+    .bill-row__actions {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      align-items: flex-end;
+    }
+
+    .mark-paid-btn {
+      font-size: 0.72rem;
+      padding: 3px 8px;
+      border: 1.5px solid var(--border);
+      border-radius: 99px;
+      background: var(--white);
+      cursor: pointer;
+      font-family: var(--font-body);
+      font-weight: 600;
+      box-shadow: var(--shadow-hard-sm);
+      transition: background 80ms, color 80ms;
+    }
+
+    .mark-paid-btn:hover { background: #4CAF7D; color: #fff; border-color: #4CAF7D; }
+
+    /* ── Bottom actions ──────────────────────────────── */
+    .bottom-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 24px;
+    }
+
+    /* ── Month nav ───────────────────────────────────── */
+    .month-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .month-nav__label { font-family: var(--font-head); font-size: 1.1rem; font-weight: 700; }
+
+    .month-nav__btn {
+      background: var(--white); border: 2px solid var(--border); border-radius: 50%;
+      width: 32px; height: 32px; font-size: 1rem; display: flex; align-items: center;
+      justify-content: center; box-shadow: var(--shadow-hard-sm); cursor: pointer;
+      transition: transform 80ms, box-shadow 80ms;
+    }
+
+    .month-nav__btn:hover { transform: translate(1px,1px); box-shadow: none; }
+  </style>
+</head>
+<body>
+
+  <nav class="nav" style="max-width: var(--max-w); margin: 0 auto;">
+    <button class="nav__back" onclick="window.location.href='dashboard.html'">←</button>
+    <span class="nav__title">💰 Expenses</span>
+    <div class="nav__avatar" id="navAvatar"></div>
+  </nav>
+
+  <div class="page">
+
+    <!-- Month nav -->
+    <div class="month-nav">
+      <button class="month-nav__btn" id="prevMonth">‹</button>
+      <span class="month-nav__label" id="monthLabel">—</span>
+      <button class="month-nav__btn" id="nextMonth">›</button>
+    </div>
+
+    <!-- Total card -->
+    <div class="total-card">
+      <div class="total-card__label">Total expenses this month</div>
+      <div class="total-card__amount" id="totalAmount">₱0.00</div>
+      <div class="total-card__per-person" id="perPersonPills"></div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="breakdown">📋 Breakdown</button>
+      <button class="tab-btn" data-tab="bills">🧾 Bills Due</button>
+    </div>
+
+    <!-- Breakdown tab -->
+    <div id="tabBreakdown">
+      <div class="card" id="expensesList">
+        <div class="spinner"></div>
+      </div>
+    </div>
+
+    <!-- Bills tab -->
+    <div id="tabBills" style="display:none;">
+      <div class="card card--yellow" id="billsList">
+        <div class="spinner"></div>
+      </div>
+      <button class="btn btn--full btn--blue" id="addBillBtn" style="margin-top:12px;">+ Add Bill Due</button>
+    </div>
+
+    <!-- Bottom actions -->
+    <div class="bottom-actions">
+      <button class="btn" style="flex:1;" id="addExpenseBtn">+ Add Expense</button>
+      <a href="receipts.html" class="btn btn--blue" style="flex:1; text-decoration:none;">🧾 View Receipts</a>
+    </div>
+  </div>
+
+  <!-- Add Expense Modal -->
+  <div class="modal-overlay" id="addExpenseModal">
+    <div class="modal">
+      <div class="modal__header">
+        <h3 class="modal__title">💸 Add Expense</h3>
+        <button class="modal__close" id="closeExpenseModal">✕</button>
+      </div>
+      <div class="field">
+        <label>What is it?</label>
+        <input type="text" id="exName" placeholder="e.g. Groceries, Grab ride" />
+      </div>
+      <div class="field">
+        <label>Amount (₱)</label>
+        <input type="number" id="exAmount" placeholder="0.00" step="0.01" min="0" />
+      </div>
+      <div class="field">
+        <label>Where?</label>
+        <input type="text" id="exWhere" placeholder="e.g. SM Supermarket" />
+      </div>
+      <div class="field">
+        <label>Who paid?</label>
+        <select id="exPaidBy">
+          <option value="Gian">Gian</option>
+          <option value="Eunice">Eunice</option>
+          <option value="Jacob">Jacob</option>
+          <option value="Mama">Mama</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Date</label>
+        <input type="date" id="exDate" />
+      </div>
+      <div class="field">
+        <label>Receipt photo (optional)</label>
+        <input type="file" id="exReceipt" accept="image/*" capture="environment" />
+        <div id="receiptPreview" style="margin-top:8px;"></div>
+      </div>
+      <button class="btn btn--full" id="saveExpenseBtn">Save Expense ✓</button>
+    </div>
+  </div>
+
+  <!-- Add Bill Modal -->
+  <div class="modal-overlay" id="addBillModal">
+    <div class="modal">
+      <div class="modal__header">
+        <h3 class="modal__title">🧾 Add Bill</h3>
+        <button class="modal__close" id="closeBillModal">✕</button>
+      </div>
+      <div class="field">
+        <label>Bill name</label>
+        <input type="text" id="billName" placeholder="e.g. Meralco, PLDT, Netflix" />
+      </div>
+      <div class="field">
+        <label>Amount (₱)</label>
+        <input type="number" id="billAmount" placeholder="0.00" step="0.01" min="0" />
+      </div>
+      <div class="field">
+        <label>Due date</label>
+        <input type="date" id="billDue" />
+      </div>
+      <button class="btn btn--full" id="saveBillBtn">Save Bill ✓</button>
+    </div>
+  </div>
+
+  <script type="module">
+    import { requireAuth, PROFILES } from './js/auth.js';
+    import { db } from './js/firebase.js';
+    import {
+      collection, addDoc, deleteDoc, updateDoc, doc, getDocs, query, where, orderBy
+    } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+    import { formatPeso, showToast, openModal, closeModal, imageToBase64 } from './js/utils.js';
+
+    const user = requireAuth();
+    if (!user) throw new Error('No auth');
+
+    const avatar = document.getElementById('navAvatar');
+    avatar.textContent = user.name[0];
+    avatar.style.background = user.color;
+    avatar.style.color = user.textColor;
+
+    // ── Month state ───────────────────────────────────────
+    const now = new Date();
+    let curYear = now.getFullYear();
+    let curMonth = now.getMonth();
+    const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const MONTHS_FULL  = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+    function updateMonthLabel() {
+      document.getElementById('monthLabel').textContent = `${MONTHS_FULL[curMonth]} ${curYear}`;
+    }
+
+    document.getElementById('prevMonth').addEventListener('click', () => {
+      curMonth--; if (curMonth < 0) { curMonth = 11; curYear--; }
+      updateMonthLabel(); loadExpenses();
+    });
+    document.getElementById('nextMonth').addEventListener('click', () => {
+      curMonth++; if (curMonth > 11) { curMonth = 0; curYear++; }
+      updateMonthLabel(); loadExpenses();
+    });
+
+    updateMonthLabel();
+
+    // ── Tabs ──────────────────────────────────────────────
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('tabBreakdown').style.display = btn.dataset.tab === 'breakdown' ? '' : 'none';
+        document.getElementById('tabBills').style.display = btn.dataset.tab === 'bills' ? '' : 'none';
+        if (btn.dataset.tab === 'bills') loadBills();
+      });
+    });
+
+    // ── Load expenses ─────────────────────────────────────
+    async function loadExpenses() {
+      const startDate = `${curYear}-${String(curMonth+1).padStart(2,'0')}-01`;
+      const lastDay = new Date(curYear, curMonth+1, 0).getDate();
+      const endDate = `${curYear}-${String(curMonth+1).padStart(2,'0')}-${String(lastDay).padStart(2,'0')}`;
+
+      const snap = await getDocs(query(
+        collection(db,'expenses'),
+        where('date','>=',startDate),
+        where('date','<=',endDate)
+      ));
+
+      const expenses = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+        .sort((a,b) => b.date.localeCompare(a.date));
+
+      // Totals
+      const total = expenses.reduce((s,e) => s + (parseFloat(e.amount) || 0), 0);
+      document.getElementById('totalAmount').textContent = formatPeso(total);
+
+      // Per person
+      const perPerson = {};
+      expenses.forEach(e => {
+        const p = e.paidBy || 'Unknown';
+        perPerson[p] = (perPerson[p] || 0) + (parseFloat(e.amount) || 0);
+      });
+      const pillsContainer = document.getElementById('perPersonPills');
+      pillsContainer.innerHTML = Object.entries(perPerson).map(([name, amt]) => {
+        const key = name.toLowerCase();
+        const prof = PROFILES[key];
+        const color = prof?.color || '#ccc';
+        const txt   = prof?.textColor || '#000';
+        return `
+          <div class="person-pill">
+            <div class="person-pill__dot" style="background:${color};color:${txt};">${name[0]}</div>
+            ${name} – ${formatPeso(amt)}
+          </div>`;
+      }).join('');
+
+      // Breakdown list
+      const list = document.getElementById('expensesList');
+      if (!expenses.length) {
+        list.innerHTML = `<div class="empty"><div class="empty__icon">💸</div><div class="empty__text">No expenses yet this month.</div></div>`;
+        return;
+      }
+
+      list.innerHTML = expenses.map(e => `
+        <div class="expense-item">
+          <div class="expense-item__icon">🛒</div>
+          <div class="expense-item__body">
+            <div class="expense-item__name">${e.name}</div>
+            <div class="expense-item__meta">${e.where ? e.where + ' · ' : ''}${e.date}</div>
+          </div>
+          <div class="expense-item__right">
+            <div class="expense-item__amount">${formatPeso(e.amount)}</div>
+            <div class="expense-item__payer">${e.paidBy || '—'}</div>
+            <button class="expense-item__delete" data-id="${e.id}" title="Delete">🗑</button>
+          </div>
+        </div>
+      `).join('');
+
+      list.querySelectorAll('.expense-item__delete').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          if (!confirm('Delete this expense?')) return;
+          await deleteDoc(doc(db,'expenses', btn.dataset.id));
+          showToast('Expense deleted');
+          loadExpenses();
+        });
+      });
+    }
+
+    // ── Load bills ────────────────────────────────────────
+    async function loadBills() {
+      const snap = await getDocs(collection(db,'bills'));
+      const bills = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+        .filter(b => !b.paid)
+        .sort((a,b) => (a.dueDate||'').localeCompare(b.dueDate||''));
+
+      const today = new Date().toISOString().split('T')[0];
+      const list = document.getElementById('billsList');
+
+      if (!bills.length) {
+        list.innerHTML = `<div class="empty"><div class="empty__icon">✅</div><div class="empty__text">No unpaid bills!</div></div>`;
+        return;
+      }
+
+      list.innerHTML = bills.map(b => {
+        const overdue = b.dueDate && b.dueDate < today;
+        return `
+          <div class="bill-row">
+            <div class="bill-row__body">
+              <div class="bill-row__name">${b.name}</div>
+              <div class="bill-row__due${overdue ? ' overdue' : ''}">
+                ${overdue ? '⚠️ Overdue — ' : '📅 Due '}${b.dueDate || '—'}
+              </div>
+            </div>
+            <div class="bill-row__actions">
+              <div class="bill-row__amount">${formatPeso(b.amount)}</div>
+              <button class="mark-paid-btn" data-id="${b.id}">✓ Mark paid</button>
+              <button class="expense-item__delete" data-id="${b.id}" title="Delete bill">🗑</button>
+            </div>
+          </div>`;
+      }).join('');
+
+      list.querySelectorAll('.mark-paid-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          await updateDoc(doc(db,'bills',btn.dataset.id), { paid: true });
+          showToast('Bill marked as paid ✅');
+          loadBills();
+        });
+      });
+
+      list.querySelectorAll('.expense-item__delete').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          if (!confirm('Delete this bill?')) return;
+          await deleteDoc(doc(db,'bills',btn.dataset.id));
+          showToast('Bill deleted');
+          loadBills();
+        });
+      });
+    }
+
+    // ── Add Expense ───────────────────────────────────────
+    document.getElementById('addExpenseBtn').addEventListener('click', () => {
+      document.getElementById('exDate').value = new Date().toISOString().split('T')[0];
+      document.getElementById('exPaidBy').value = user.name;
+      openModal('addExpenseModal');
+    });
+    document.getElementById('closeExpenseModal').addEventListener('click', () => closeModal('addExpenseModal'));
+    document.getElementById('addExpenseModal').addEventListener('click', e => { if (e.target===e.currentTarget) closeModal('addExpenseModal'); });
+
+    // Receipt preview
+    document.getElementById('exReceipt').addEventListener('change', e => {
+      const file = e.target.files[0];
+      const preview = document.getElementById('receiptPreview');
+      if (!file) { preview.innerHTML = ''; return; }
+      const url = URL.createObjectURL(file);
+      preview.innerHTML = `<img src="${url}" style="max-height:120px;border-radius:8px;border:2px solid var(--border);" />`;
+    });
+
+    document.getElementById('saveExpenseBtn').addEventListener('click', async () => {
+      const name   = document.getElementById('exName').value.trim();
+      const amount = document.getElementById('exAmount').value;
+      const date   = document.getElementById('exDate').value;
+      if (!name || !amount || !date) { showToast('Name, amount and date are required', 'error'); return; }
+
+      const btn = document.getElementById('saveExpenseBtn');
+      btn.disabled = true; btn.textContent = 'Saving…';
+
+      try {
+        let receiptBase64 = null;
+        const file = document.getElementById('exReceipt').files[0];
+        if (file) {
+          btn.textContent = 'Compressing image…';
+          receiptBase64 = await imageToBase64(file);
+          btn.textContent = 'Saving…';
+        }
+
+        await addDoc(collection(db,'expenses'), {
+          name,
+          amount: parseFloat(amount),
+          where:  document.getElementById('exWhere').value.trim(),
+          paidBy: document.getElementById('exPaidBy').value,
+          date,
+          receiptBase64: receiptBase64 || null,
+          addedBy: user.name,
+          createdAt: new Date().toISOString(),
+        });
+
+        showToast('Expense saved! 💸');
+        closeModal('addExpenseModal');
+        ['exName','exAmount','exWhere'].forEach(id => document.getElementById(id).value = '');
+        document.getElementById('exReceipt').value = '';
+        document.getElementById('receiptPreview').innerHTML = '';
+        loadExpenses();
+      } catch(err) {
+        showToast('Failed to save', 'error');
+        console.error(err);
+      } finally {
+        btn.disabled = false; btn.textContent = 'Save Expense ✓';
+      }
+    });
+
+    // ── Add Bill ──────────────────────────────────────────
+    document.getElementById('addBillBtn').addEventListener('click', () => openModal('addBillModal'));
+    document.getElementById('closeBillModal').addEventListener('click', () => closeModal('addBillModal'));
+    document.getElementById('addBillModal').addEventListener('click', e => { if (e.target===e.currentTarget) closeModal('addBillModal'); });
+
+    document.getElementById('saveBillBtn').addEventListener('click', async () => {
+      const name   = document.getElementById('billName').value.trim();
+      const amount = document.getElementById('billAmount').value;
+      const due    = document.getElementById('billDue').value;
+      if (!name || !due) { showToast('Name and due date are required', 'error'); return; }
+
+      const btn = document.getElementById('saveBillBtn');
+      btn.disabled = true; btn.textContent = 'Saving…';
+      try {
+        await addDoc(collection(db,'bills'), {
+          name,
+          amount: parseFloat(amount) || 0,
+          dueDate: due,
+          paid: false,
+          addedBy: user.name,
+          createdAt: new Date().toISOString(),
+        });
+        showToast('Bill added! 🧾');
+        closeModal('addBillModal');
+        ['billName','billAmount','billDue'].forEach(id => document.getElementById(id).value = '');
+        loadBills();
+      } catch(err) {
+        showToast('Failed to save', 'error');
+        console.error(err);
+      } finally {
+        btn.disabled = false; btn.textContent = 'Save Bill ✓';
+      }
+    });
+
+    // ── Init ──────────────────────────────────────────────
+    loadExpenses();
+  </script>
+</body>
+</html>

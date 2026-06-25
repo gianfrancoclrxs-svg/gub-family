@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Calendar – GUB Family</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    /* ── View toggle ────────────────────────────────── */
+    .view-toggle {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+
+    .view-toggle__btn {
+      flex: 1;
+      padding: 10px;
+      border: 2px solid var(--border);
+      border-radius: var(--radius-wobbly-sm);
+      background: var(--white);
+      font-family: var(--font-body);
+      font-size: 0.9rem;
+      font-weight: 600;
+      box-shadow: var(--shadow-hard-sm);
+      cursor: pointer;
+      transition: background 100ms, color 100ms, transform 100ms, box-shadow 100ms;
+    }
+
+    .view-toggle__btn.active,
+    .view-toggle__btn:hover {
+      background: var(--fg);
+      color: var(--white);
+      transform: translate(1px,1px);
+      box-shadow: none;
+    }
+
+    /* ── Month nav ──────────────────────────────────── */
+    .month-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .month-nav__label {
+      font-family: var(--font-head);
+      font-size: 1.4rem;
+      font-weight: 700;
+    }
+
+    .month-nav__btn {
+      background: var(--white);
+      border: 2px solid var(--border);
+      border-radius: 50%;
+      width: 36px;
+      height: 36px;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: var(--shadow-hard-sm);
+      cursor: pointer;
+      transition: transform 80ms, box-shadow 80ms;
+    }
+
+    .month-nav__btn:hover { transform: translate(1px,1px); box-shadow: none; }
+
+    /* ── Month calendar grid ─────────────────────────── */
+    .cal-grid { width: 100%; }
+
+    .cal-grid__days-header {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      margin-bottom: 4px;
+    }
+
+    .cal-grid__day-name {
+      text-align: center;
+      font-size: 0.72rem;
+      font-weight: 700;
+      opacity: 0.45;
+      text-transform: uppercase;
+      padding: 4px 0;
+    }
+
+    .cal-grid__cells {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+    }
+
+    .cal-cell {
+      aspect-ratio: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding-top: 6px;
+      border-radius: 8px;
+      cursor: pointer;
+      position: relative;
+      transition: background 100ms;
+      border: 1.5px solid transparent;
+      min-height: 40px;
+    }
+
+    .cal-cell:hover { background: var(--muted); }
+
+    .cal-cell.other-month .cal-cell__num { opacity: 0.28; }
+
+    .cal-cell.today {
+      background: var(--fg);
+      border-color: var(--fg);
+    }
+
+    .cal-cell.today .cal-cell__num { color: var(--white); }
+
+    .cal-cell.selected {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .cal-cell.selected .cal-cell__num { color: var(--white); }
+
+    .cal-cell__num {
+      font-family: var(--font-head);
+      font-size: 0.9rem;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .cal-cell__dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--accent);
+      margin-top: 3px;
+    }
+
+    .cal-cell.today .cal-cell__dot,
+    .cal-cell.selected .cal-cell__dot { background: var(--white); }
+
+    /* ── Year view ───────────────────────────────────── */
+    .year-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    .year-month-card {
+      background: var(--white);
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 8px;
+      cursor: pointer;
+      box-shadow: var(--shadow-hard-sm);
+      transition: transform 80ms, box-shadow 80ms;
+    }
+
+    .year-month-card:hover {
+      transform: translate(1px,1px);
+      box-shadow: none;
+    }
+
+    .year-month-card.current-month {
+      background: var(--fg);
+      border-color: var(--fg);
+    }
+
+    .year-month-card.current-month .year-month-card__name { color: var(--white); }
+
+    .year-month-card__name {
+      font-family: var(--font-head);
+      font-size: 0.85rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+      text-align: center;
+    }
+
+    .year-month-card__mini {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 1px;
+    }
+
+    .year-month-card__mini-cell {
+      aspect-ratio: 1;
+      border-radius: 2px;
+      font-size: 0.35rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0.6;
+    }
+
+    .year-month-card__mini-cell.has-event { background: var(--accent); opacity: 1; border-radius: 50%; }
+    .year-month-card.current-month .year-month-card__mini-cell { color: #fff; }
+
+    /* ── Year nav ────────────────────────────────────── */
+    .year-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .year-nav__label {
+      font-family: var(--font-head);
+      font-size: 1.8rem;
+      font-weight: 700;
+    }
+
+    /* ── Day detail panel ────────────────────────────── */
+    .day-panel {
+      margin-top: 24px;
+    }
+
+    .day-panel__header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .day-panel__title {
+      font-family: var(--font-head);
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+
+    .event-card {
+      background: var(--white);
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 10px;
+      box-shadow: var(--shadow-hard-sm);
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    }
+
+    .event-card__time {
+      font-size: 0.78rem;
+      font-weight: 700;
+      opacity: 0.5;
+      min-width: 52px;
+      white-space: nowrap;
+      padding-top: 2px;
+    }
+
+    .event-card__body { flex: 1; min-width: 0; }
+
+    .event-card__title {
+      font-size: 1rem;
+      font-weight: 600;
+      word-break: break-word;
+    }
+
+    .event-card__meta {
+      font-size: 0.78rem;
+      opacity: 0.5;
+      margin-top: 4px;
+    }
+
+    .event-card__delete {
+      background: none;
+      border: none;
+      font-size: 1rem;
+      opacity: 0.35;
+      cursor: pointer;
+      padding: 0 4px;
+      transition: opacity 100ms;
+    }
+
+    .event-card__delete:hover { opacity: 1; color: var(--accent); }
+  </style>
+</head>
+<body>
+
+  <!-- Nav -->
+  <nav class="nav" style="max-width: var(--max-w); margin: 0 auto;">
+    <button class="nav__back" onclick="window.location.href='dashboard.html'">←</button>
+    <span class="nav__title">🗓️ Calendar</span>
+    <div class="nav__avatar" id="navAvatar"></div>
+  </nav>
+
+  <div class="page">
+    <!-- View toggle -->
+    <div class="view-toggle">
+      <button class="view-toggle__btn active" id="btnMonth">📅 Month</button>
+      <button class="view-toggle__btn" id="btnYear">📆 Year</button>
+    </div>
+
+    <!-- Month view -->
+    <div id="monthView">
+      <div class="month-nav">
+        <button class="month-nav__btn" id="prevMonth">‹</button>
+        <span class="month-nav__label" id="monthLabel">—</span>
+        <button class="month-nav__btn" id="nextMonth">›</button>
+      </div>
+      <div class="card" style="padding: 12px;">
+        <div class="cal-grid">
+          <div class="cal-grid__days-header">
+            <div class="cal-grid__day-name">Su</div>
+            <div class="cal-grid__day-name">Mo</div>
+            <div class="cal-grid__day-name">Tu</div>
+            <div class="cal-grid__day-name">We</div>
+            <div class="cal-grid__day-name">Th</div>
+            <div class="cal-grid__day-name">Fr</div>
+            <div class="cal-grid__day-name">Sa</div>
+          </div>
+          <div class="cal-grid__cells" id="calCells"></div>
+        </div>
+      </div>
+
+      <!-- Day panel -->
+      <div class="day-panel" id="dayPanel" style="display:none;">
+        <div class="day-panel__header">
+          <h2 class="day-panel__title" id="dayPanelTitle">—</h2>
+          <button class="btn btn--sm" id="addEventBtn">+ Add</button>
+        </div>
+        <div id="dayEvents"></div>
+      </div>
+    </div>
+
+    <!-- Year view -->
+    <div id="yearView" style="display:none;">
+      <div class="year-nav">
+        <button class="month-nav__btn" id="prevYear">‹</button>
+        <span class="year-nav__label" id="yearLabel">—</span>
+        <button class="month-nav__btn" id="nextYear">›</button>
+      </div>
+      <div class="year-grid" id="yearGrid"></div>
+    </div>
+  </div>
+
+  <!-- Add Event Modal -->
+  <div class="modal-overlay" id="addEventModal">
+    <div class="modal">
+      <div class="modal__header">
+        <h3 class="modal__title">📝 Add Event</h3>
+        <button class="modal__close" id="closeEventModal">✕</button>
+      </div>
+      <div class="field">
+        <label>Date</label>
+        <input type="date" id="evDate" />
+      </div>
+      <div class="field">
+        <label>Time (optional)</label>
+        <input type="time" id="evTime" />
+      </div>
+      <div class="field">
+        <label>What's the plan?</label>
+        <input type="text" id="evTitle" placeholder="e.g. Doctor's appointment" />
+      </div>
+      <div class="field">
+        <label>Where?</label>
+        <input type="text" id="evWhere" placeholder="e.g. SM Pampanga" />
+      </div>
+      <div class="field">
+        <label>With who?</label>
+        <input type="text" id="evWith" placeholder="e.g. Mama, Jacob" />
+      </div>
+      <div class="field">
+        <label>Notes (optional)</label>
+        <textarea id="evNotes" placeholder="Extra details..."></textarea>
+      </div>
+      <button class="btn btn--full" id="saveEventBtn">Save Event ✓</button>
+    </div>
+  </div>
+
+  <script type="module">
+    import { requireAuth } from './js/auth.js';
+    import { db } from './js/firebase.js';
+    import {
+      collection, addDoc, deleteDoc, doc, getDocs, query, where, orderBy, Timestamp
+    } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+    import { toDateKey, formatDateLong, formatTime, showToast, openModal, closeModal } from './js/utils.js';
+
+    const user = requireAuth();
+    if (!user) throw new Error('No auth');
+
+    const avatar = document.getElementById('navAvatar');
+    avatar.textContent = user.name[0];
+    avatar.style.background = user.color;
+    avatar.style.color = user.textColor;
+
+    // State
+    let view = 'month';
+    let currentYear = new Date().getFullYear();
+    let currentMonth = new Date().getMonth();
+    let selectedDate = toDateKey(new Date());
+    let eventsByDate = {}; // { 'YYYY-MM-DD': [events] }
+
+    const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    const todayStr = toDateKey(new Date());
+
+    // Toggle views
+    document.getElementById('btnMonth').addEventListener('click', () => setView('month'));
+    document.getElementById('btnYear').addEventListener('click',  () => setView('year'));
+
+    function setView(v) {
+      view = v;
+      document.getElementById('monthView').style.display = v === 'month' ? '' : 'none';
+      document.getElementById('yearView').style.display  = v === 'year'  ? '' : 'none';
+      document.getElementById('btnMonth').classList.toggle('active', v === 'month');
+      document.getElementById('btnYear').classList.toggle('active',  v === 'year');
+      if (v === 'year') renderYear();
+    }
+
+    // ── Load events for current month range ──────────────
+    async function loadMonthEvents(year, month) {
+      const start = `${year}-${String(month + 1).padStart(2,'0')}-01`;
+      const lastDay = new Date(year, month + 1, 0).getDate();
+      const end   = `${year}-${String(month + 1).padStart(2,'0')}-${String(lastDay).padStart(2,'0')}`;
+      const snap = await getDocs(query(collection(db,'events'), where('date','>=',start), where('date','<=',end)));
+      eventsByDate = {};
+      snap.docs.forEach(d => {
+        const ev = { id: d.id, ...d.data() };
+        if (!eventsByDate[ev.date]) eventsByDate[ev.date] = [];
+        eventsByDate[ev.date].push(ev);
+      });
+    }
+
+    // ── Render month ──────────────────────────────────────
+    async function renderMonth() {
+      await loadMonthEvents(currentYear, currentMonth);
+      document.getElementById('monthLabel').textContent = `${MONTHS[currentMonth]} ${currentYear}`;
+      const cells = document.getElementById('calCells');
+      cells.innerHTML = '';
+
+      const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+      const lastDate = new Date(currentYear, currentMonth + 1, 0).getDate();
+      const prevLastDate = new Date(currentYear, currentMonth, 0).getDate();
+
+      // Prev month padding
+      for (let i = firstDay - 1; i >= 0; i--) {
+        const d = prevLastDate - i;
+        const m = currentMonth === 0 ? 11 : currentMonth - 1;
+        const y = currentMonth === 0 ? currentYear - 1 : currentYear;
+        cells.appendChild(makeCell(d, `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`, true));
+      }
+
+      // Current month
+      for (let d = 1; d <= lastDate; d++) {
+        const key = `${currentYear}-${String(currentMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        cells.appendChild(makeCell(d, key, false));
+      }
+
+      // Next month padding
+      const total = firstDay + lastDate;
+      const rem = total % 7 === 0 ? 0 : 7 - (total % 7);
+      for (let d = 1; d <= rem; d++) {
+        const m = currentMonth === 11 ? 0 : currentMonth + 1;
+        const y = currentMonth === 11 ? currentYear + 1 : currentYear;
+        cells.appendChild(makeCell(d, `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`, true));
+      }
+
+      // Re-render selected day panel
+      if (selectedDate) showDayPanel(selectedDate);
+    }
+
+    function makeCell(day, dateKey, otherMonth) {
+      const div = document.createElement('div');
+      div.className = 'cal-cell' +
+        (otherMonth ? ' other-month' : '') +
+        (dateKey === todayStr ? ' today' : '') +
+        (dateKey === selectedDate ? ' selected' : '');
+      div.innerHTML = `<span class="cal-cell__num">${day}</span>`;
+      if (eventsByDate[dateKey]?.length) {
+        div.innerHTML += `<span class="cal-cell__dot"></span>`;
+      }
+      div.addEventListener('click', () => {
+        selectedDate = dateKey;
+        // If other month, navigate
+        if (otherMonth) {
+          const [y, m] = dateKey.split('-').map(Number);
+          currentYear = y; currentMonth = m - 1;
+          renderMonth(); return;
+        }
+        document.querySelectorAll('.cal-cell.selected').forEach(c => c.classList.remove('selected'));
+        div.classList.add('selected');
+        showDayPanel(dateKey);
+      });
+      return div;
+    }
+
+    // ── Day panel ─────────────────────────────────────────
+    function showDayPanel(dateKey) {
+      const panel = document.getElementById('dayPanel');
+      panel.style.display = '';
+      document.getElementById('dayPanelTitle').textContent = formatDateLong(dateKey);
+      document.getElementById('addEventBtn').onclick = () => {
+        document.getElementById('evDate').value = dateKey;
+        openModal('addEventModal');
+      };
+      renderDayEvents(dateKey);
+    }
+
+    function renderDayEvents(dateKey) {
+      const container = document.getElementById('dayEvents');
+      const events = (eventsByDate[dateKey] || []).sort((a,b) => (a.time||'').localeCompare(b.time||''));
+      if (!events.length) {
+        container.innerHTML = `<div class="empty"><div class="empty__icon">📭</div><div class="empty__text">No events — tap + Add to schedule one.</div></div>`;
+        return;
+      }
+      container.innerHTML = events.map(e => `
+        <div class="event-card">
+          <div class="event-card__time">${e.time ? formatTime(e.time) : 'All day'}</div>
+          <div class="event-card__body">
+            <div class="event-card__title">${e.title}</div>
+            ${e.where || e.withWho ? `<div class="event-card__meta">${[e.where, e.withWho ? 'with '+e.withWho:''].filter(Boolean).join(' · ')}</div>` : ''}
+            ${e.notes ? `<div class="event-card__meta">${e.notes}</div>` : ''}
+          </div>
+          <button class="event-card__delete" data-id="${e.id}" title="Delete">🗑</button>
+        </div>
+      `).join('');
+
+      container.querySelectorAll('.event-card__delete').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          if (!confirm('Delete this event?')) return;
+          await deleteDoc(doc(db, 'events', btn.dataset.id));
+          showToast('Event deleted');
+          await loadMonthEvents(currentYear, currentMonth);
+          renderDayEvents(dateKey);
+          // Refresh dot
+          document.querySelectorAll('.cal-cell').forEach(c => {
+            const num = parseInt(c.querySelector('.cal-cell__num').textContent);
+            const key = `${currentYear}-${String(currentMonth+1).padStart(2,'0')}-${String(num).padStart(2,'0')}`;
+            const existingDot = c.querySelector('.cal-cell__dot');
+            if (existingDot) existingDot.remove();
+            if (eventsByDate[key]?.length) c.innerHTML += `<span class="cal-cell__dot"></span>`;
+          });
+        });
+      });
+    }
+
+    // ── Year view ─────────────────────────────────────────
+    async function renderYear() {
+      document.getElementById('yearLabel').textContent = currentYear;
+      // Load all events this year
+      const snap = await getDocs(query(collection(db,'events'),
+        where('date','>=',`${currentYear}-01-01`),
+        where('date','<=',`${currentYear}-12-31`)
+      ));
+      const yearEvents = {};
+      snap.docs.forEach(d => {
+        const ev = d.data();
+        yearEvents[ev.date] = (yearEvents[ev.date] || 0) + 1;
+      });
+
+      const grid = document.getElementById('yearGrid');
+      grid.innerHTML = '';
+      for (let m = 0; m < 12; m++) {
+        const card = document.createElement('div');
+        card.className = `year-month-card${m === new Date().getMonth() && currentYear === new Date().getFullYear() ? ' current-month' : ''}`;
+        const firstDay = new Date(currentYear, m, 1).getDay();
+        const lastDate = new Date(currentYear, m+1, 0).getDate();
+        let miniHTML = Array(firstDay).fill('<div class="year-month-card__mini-cell"></div>').join('');
+        for (let d = 1; d <= lastDate; d++) {
+          const key = `${currentYear}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+          miniHTML += `<div class="year-month-card__mini-cell${yearEvents[key] ? ' has-event' : ''}">${d}</div>`;
+        }
+        card.innerHTML = `<div class="year-month-card__name">${MONTHS[m].slice(0,3)}</div><div class="year-month-card__mini">${miniHTML}</div>`;
+        card.addEventListener('click', () => {
+          currentMonth = m;
+          setView('month');
+          renderMonth();
+        });
+        grid.appendChild(card);
+      }
+    }
+
+    // ── Nav buttons ───────────────────────────────────────
+    document.getElementById('prevMonth').addEventListener('click', () => {
+      currentMonth--; if (currentMonth < 0) { currentMonth = 11; currentYear--; }
+      renderMonth();
+    });
+    document.getElementById('nextMonth').addEventListener('click', () => {
+      currentMonth++; if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+      renderMonth();
+    });
+    document.getElementById('prevYear').addEventListener('click', () => { currentYear--; renderYear(); });
+    document.getElementById('nextYear').addEventListener('click', () => { currentYear++; renderYear(); });
+
+    // ── Add Event ─────────────────────────────────────────
+    document.getElementById('closeEventModal').addEventListener('click', () => closeModal('addEventModal'));
+    document.getElementById('addEventModal').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal('addEventModal'); });
+
+    document.getElementById('saveEventBtn').addEventListener('click', async () => {
+      const title = document.getElementById('evTitle').value.trim();
+      const date  = document.getElementById('evDate').value;
+      if (!title || !date) { showToast('Title and date are required', 'error'); return; }
+
+      const btn = document.getElementById('saveEventBtn');
+      btn.disabled = true; btn.textContent = 'Saving…';
+
+      try {
+        const ev = {
+          title,
+          date,
+          time:    document.getElementById('evTime').value || '',
+          where:   document.getElementById('evWhere').value.trim(),
+          withWho: document.getElementById('evWith').value.trim(),
+          notes:   document.getElementById('evNotes').value.trim(),
+          addedBy: user.name,
+          createdAt: new Date().toISOString(),
+        };
+        await addDoc(collection(db,'events'), ev);
+        showToast('Event saved! 🗓️');
+        closeModal('addEventModal');
+        // Reset
+        ['evTitle','evTime','evWhere','evWith','evNotes'].forEach(id => document.getElementById(id).value = '');
+        await loadMonthEvents(currentYear, currentMonth);
+        renderDayEvents(date);
+        // Refresh dot on cell
+        renderMonth();
+      } catch(err) {
+        showToast('Failed to save', 'error');
+        console.error(err);
+      } finally {
+        btn.disabled = false; btn.textContent = 'Save Event ✓';
+      }
+    });
+
+    // ── Init ──────────────────────────────────────────────
+    renderMonth();
+  </script>
+</body>
+</html>
