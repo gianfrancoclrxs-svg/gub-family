@@ -86,6 +86,12 @@
       margin-top: 2px;
     }
 
+    .event-item__by {
+      font-size: 0.82rem;
+      opacity: 0.45;
+      font-weight: 400;
+    }
+
     /* ── Bills block ─────────────────────────────────── */
     .bill-item {
       display: flex;
@@ -174,7 +180,7 @@
 
   <!-- Nav -->
   <nav class="nav" style="max-width: var(--max-w); margin: 0 auto;">
-    <span class="nav__title">🏠 GUB</span>
+    <span class="nav__title">🏠 GUB Family</span>
     <div style="display:flex;align-items:center;gap:10px;">
       <button class="nav__back" id="switchBtn" title="Switch profile" style="border:none;background:none;font-size:1.2rem;">🔄</button>
       <div class="nav__avatar" id="navAvatar"></div>
@@ -271,7 +277,7 @@
           <div class="event-item__time">${e.time ? formatTime(e.time) : 'All day'}</div>
           <div class="event-item__dot"></div>
           <div class="event-item__body">
-            <div class="event-item__title">${e.title}</div>
+            <div class="event-item__title">${e.title}${e.addedBy ? ` <span class="event-item__by">— ${e.addedBy}</span>` : ''}</div>
             ${e.where || e.withWho ? `<div class="event-item__meta">${[e.where, e.withWho ? 'with ' + e.withWho : ''].filter(Boolean).join(' · ')}</div>` : ''}
           </div>
         </div>

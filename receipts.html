@@ -135,6 +135,32 @@
     </div>
   </div>
 
+  <!-- Receipt Lightbox -->
+  <div class="modal-overlay" id="receiptLightbox" style="align-items:center;">
+    <div class="modal" style="max-height:92dvh;display:flex;flex-direction:column;gap:0;padding:0;overflow:hidden;border-radius:20px;">
+      <!-- Header -->
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:2px dashed var(--muted);flex-shrink:0;">
+        <div>
+          <div style="font-family:var(--font-head);font-size:1.1rem;font-weight:700;" id="lbTitle">—</div>
+          <div style="font-size:0.78rem;opacity:0.5;margin-top:2px;" id="lbMeta">—</div>
+        </div>
+        <button class="modal__close" id="closeLightbox">✕</button>
+      </div>
+      <!-- Image -->
+      <div style="flex:1;overflow:auto;background:#111;display:flex;align-items:center;justify-content:center;min-height:200px;">
+        <img id="lbImage" src="" alt="Receipt" style="max-width:100%;max-height:60dvh;object-fit:contain;display:block;" />
+      </div>
+      <!-- Footer -->
+      <div style="padding:16px 20px;border-top:2px dashed var(--muted);flex-shrink:0;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+          <div style="font-family:var(--font-head);font-size:1.1rem;font-weight:700;color:var(--accent);" id="lbAmount">—</div>
+          <div style="font-size:0.85rem;opacity:0.5;" id="lbPayer">—</div>
+        </div>
+        <button class="btn btn--full btn--blue" id="lbDownload">⬇️ Download Receipt</button>
+      </div>
+    </div>
+  </div>
+
   <script type="module">
     import { requireAuth } from './js/auth.js';
     import { db } from './js/firebase.js';
@@ -188,18 +214,39 @@
       `).join('');
     }
 
-    // Open receipt image in new tab
+    // Open receipt in lightbox
     window.openReceipt = function(id) {
       const receipt = allReceipts.find(r => r.id === id);
       if (!receipt?.receiptBase64) return;
-      const win = window.open();
-      const img = win.document.createElement('img');
-      img.src = receipt.receiptBase64;
-      img.style.cssText = 'max-width:100%;max-height:100vh;object-fit:contain;display:block;margin:auto;';
-      win.document.body.style.cssText = 'margin:0;background:#111;display:flex;align-items:center;justify-content:center;min-height:100vh;';
-      win.document.title = 'Receipt – ' + receipt.name;
-      win.document.body.appendChild(img);
+
+      document.getElementById('lbTitle').textContent  = receipt.name;
+      document.getElementById('lbMeta').textContent   = [receipt.where, receipt.date].filter(Boolean).join(' · ');
+      document.getElementById('lbAmount').textContent = formatPeso(receipt.amount);
+      document.getElementById('lbPayer').textContent  = `Paid by ${receipt.paidBy || '—'}`;
+      document.getElementById('lbImage').src          = receipt.receiptBase64;
+
+      // Download button
+      document.getElementById('lbDownload').onclick = () => {
+        const a = document.createElement('a');
+        a.href     = receipt.receiptBase64;
+        a.download = `receipt_${receipt.name.replace(/\s+/g,'_')}_${receipt.date || 'unknown'}.jpg`;
+        a.click();
+      };
+
+      document.getElementById('receiptLightbox').classList.add('active');
     };
+
+    document.getElementById('closeLightbox').addEventListener('click', () => {
+      document.getElementById('receiptLightbox').classList.remove('active');
+      document.getElementById('lbImage').src = '';
+    });
+
+    document.getElementById('receiptLightbox').addEventListener('click', e => {
+      if (e.target === e.currentTarget) {
+        document.getElementById('receiptLightbox').classList.remove('active');
+        document.getElementById('lbImage').src = '';
+      }
+    });
 
     // Filter chips
     document.getElementById('filterBar').addEventListener('click', e => {

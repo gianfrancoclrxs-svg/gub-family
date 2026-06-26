@@ -159,18 +159,19 @@
       margin-top: 2px;
     }
 
-    .expense-item__delete {
+    .expense-item__delete,
+    .expense-item__edit {
       background: none;
       border: none;
       font-size: 0.9rem;
-      opacity: 0.3;
+      opacity: 0.35;
       cursor: pointer;
       padding: 0;
-      margin-top: 2px;
       transition: opacity 100ms;
     }
 
     .expense-item__delete:hover { opacity: 1; color: var(--accent); }
+    .expense-item__edit:hover   { opacity: 1; }
 
     /* ── Bill item ───────────────────────────────────── */
     .bill-row {
@@ -344,6 +345,10 @@
         <input type="file" id="exReceipt" accept="image/*" capture="environment" />
         <div id="receiptPreview" style="margin-top:8px;"></div>
       </div>
+      <div class="field">
+        <label>Notes (optional)</label>
+        <textarea id="exNotes" placeholder="Any extra details..."></textarea>
+      </div>
       <button class="btn btn--full" id="saveExpenseBtn">Save Expense ✓</button>
     </div>
   </div>
@@ -368,6 +373,47 @@
         <input type="date" id="billDue" />
       </div>
       <button class="btn btn--full" id="saveBillBtn">Save Bill ✓</button>
+    </div>
+  </div>
+
+  <!-- Edit Expense Modal -->
+  <div class="modal-overlay" id="editExpenseModal">
+    <div class="modal">
+      <div class="modal__header">
+        <h3 class="modal__title">✏️ Edit Expense</h3>
+        <button class="modal__close" id="closeEditExpenseModal">✕</button>
+      </div>
+      <input type="hidden" id="editExId" />
+      <div class="field">
+        <label>What is it?</label>
+        <input type="text" id="editExName" />
+      </div>
+      <div class="field">
+        <label>Amount (₱)</label>
+        <input type="number" id="editExAmount" step="0.01" min="0" />
+      </div>
+      <div class="field">
+        <label>Where?</label>
+        <input type="text" id="editExWhere" />
+      </div>
+      <div class="field">
+        <label>Who paid?</label>
+        <select id="editExPaidBy">
+          <option value="Gian">Gian</option>
+          <option value="Eunice">Eunice</option>
+          <option value="Jacob">Jacob</option>
+          <option value="Mama">Mama</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Date</label>
+        <input type="date" id="editExDate" />
+      </div>
+      <div class="field">
+        <label>Notes</label>
+        <textarea id="editExNotes" placeholder="Any extra details..."></textarea>
+      </div>
+      <button class="btn btn--full" id="saveEditExpenseBtn">Save Changes ✓</button>
     </div>
   </div>
 
@@ -471,14 +517,36 @@
           <div class="expense-item__body">
             <div class="expense-item__name">${e.name}</div>
             <div class="expense-item__meta">${e.where ? e.where + ' · ' : ''}${e.date}</div>
+            ${e.notes ? `<div class="expense-item__meta" style="font-style:italic;">${e.notes}</div>` : ''}
           </div>
           <div class="expense-item__right">
             <div class="expense-item__amount">${formatPeso(e.amount)}</div>
             <div class="expense-item__payer">${e.paidBy || '—'}</div>
-            <button class="expense-item__delete" data-id="${e.id}" title="Delete">🗑</button>
+            <div style="display:flex;gap:6px;justify-content:flex-end;margin-top:4px;">
+              <button class="expense-item__edit" data-id="${e.id}" title="Edit">✏️</button>
+              <button class="expense-item__delete" data-id="${e.id}" title="Delete">🗑</button>
+            </div>
           </div>
         </div>
       `).join('');
+
+      // Store expenses for edit lookup
+      window._expenses = expenses;
+
+      list.querySelectorAll('.expense-item__edit').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const e = window._expenses.find(x => x.id === btn.dataset.id);
+          if (!e) return;
+          document.getElementById('editExId').value      = e.id;
+          document.getElementById('editExName').value    = e.name || '';
+          document.getElementById('editExAmount').value  = e.amount || '';
+          document.getElementById('editExWhere').value   = e.where || '';
+          document.getElementById('editExPaidBy').value  = e.paidBy || 'Gian';
+          document.getElementById('editExDate').value    = e.date || '';
+          document.getElementById('editExNotes').value   = e.notes || '';
+          openModal('editExpenseModal');
+        });
+      });
 
       list.querySelectorAll('.expense-item__delete').forEach(btn => {
         btn.addEventListener('click', async () => {
@@ -583,6 +651,7 @@
           where:  document.getElementById('exWhere').value.trim(),
           paidBy: document.getElementById('exPaidBy').value,
           date,
+          notes:  document.getElementById('exNotes').value.trim(),
           receiptBase64: receiptBase64 || null,
           addedBy: user.name,
           createdAt: new Date().toISOString(),
@@ -590,7 +659,7 @@
 
         showToast('Expense saved! 💸');
         closeModal('addExpenseModal');
-        ['exName','exAmount','exWhere'].forEach(id => document.getElementById(id).value = '');
+        ['exName','exAmount','exWhere','exNotes'].forEach(id => document.getElementById(id).value = '');
         document.getElementById('exReceipt').value = '';
         document.getElementById('receiptPreview').innerHTML = '';
         loadExpenses();
@@ -633,6 +702,41 @@
         console.error(err);
       } finally {
         btn.disabled = false; btn.textContent = 'Save Bill ✓';
+      }
+    });
+
+    // ── Edit Expense ──────────────────────────────────────
+    document.getElementById('closeEditExpenseModal').addEventListener('click', () => closeModal('editExpenseModal'));
+    document.getElementById('editExpenseModal').addEventListener('click', e => { if (e.target===e.currentTarget) closeModal('editExpenseModal'); });
+
+    document.getElementById('saveEditExpenseBtn').addEventListener('click', async () => {
+      const id     = document.getElementById('editExId').value;
+      const name   = document.getElementById('editExName').value.trim();
+      const amount = document.getElementById('editExAmount').value;
+      const date   = document.getElementById('editExDate').value;
+      if (!name || !amount || !date) { showToast('Name, amount and date are required', 'error'); return; }
+
+      const btn = document.getElementById('saveEditExpenseBtn');
+      btn.disabled = true; btn.textContent = 'Saving…';
+      try {
+        await updateDoc(doc(db,'expenses', id), {
+          name,
+          amount:  parseFloat(amount),
+          where:   document.getElementById('editExWhere').value.trim(),
+          paidBy:  document.getElementById('editExPaidBy').value,
+          date,
+          notes:   document.getElementById('editExNotes').value.trim(),
+          updatedBy: user.name,
+          updatedAt: new Date().toISOString(),
+        });
+        showToast('Expense updated! ✏️');
+        closeModal('editExpenseModal');
+        loadExpenses();
+      } catch(err) {
+        showToast('Failed to update', 'error');
+        console.error(err);
+      } finally {
+        btn.disabled = false; btn.textContent = 'Save Changes ✓';
       }
     });
 
