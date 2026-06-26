@@ -223,6 +223,16 @@
       </div>
     </div>
 
+    <!-- Tita Bhebz balance -->
+    <div class="agenda-block" id="bhebzBlock" style="display:none;">
+      <h2 class="section-title">💜 Balance to Tita Bhebz</h2>
+      <div style="background:#7c3aed;color:#fff;border:2px solid #2d2d2d;border-radius:var(--radius-wobbly-md);box-shadow:var(--shadow-hard);padding:20px;">
+        <div style="font-size:0.78rem;opacity:0.65;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;">Total unpaid</div>
+        <div style="font-family:var(--font-head);font-size:2rem;font-weight:700;" id="bhebzDashAmount">₱0.00</div>
+        <div style="font-size:0.8rem;opacity:0.65;margin-top:4px;" id="bhebzDashCount">— unpaid bills</div>
+      </div>
+    </div>
+
     <!-- Quick actions -->
     <div class="quick-actions">
       <a href="calendar.html" class="quick-btn">
@@ -304,28 +314,46 @@
       const snap = await getDocs(col);
       const bills = snap.docs.map(d => ({ id: d.id, ...d.data() }))
         .filter(b => !b.paid)
-        .sort((a, b) => (a.dueDate || '').localeCompare(b.dueDate || ''));
+        .sort((a, b) => {
+          if (!a.dueDate && !b.dueDate) return 0;
+          if (!a.dueDate) return 1;
+          if (!b.dueDate) return -1;
+          return a.dueDate.localeCompare(b.dueDate);
+        });
 
       const container = document.getElementById('billsCard');
       const block = document.getElementById('billsBlock');
 
       if (!bills.length) {
         block.style.display = 'none';
-        return;
+      } else {
+        const today = todayKey();
+        container.innerHTML = bills.map(b => {
+          const isOverdue = b.dueDate && b.dueDate < today;
+          const noDate    = !b.dueDate;
+          const dueText   = noDate ? '📌 No due date' : (isOverdue ? '⚠️ Overdue — ' : '📅 Due ') + formatDateLong(b.dueDate);
+          return `
+            <div class="bill-item ${isOverdue ? 'bill-item__overdue' : ''}">
+              <div class="bill-item__info">
+                <div class="bill-item__name">${b.name}${b.biller === 'Tita Bhebz' ? ' <span style="font-size:0.7rem;color:#7c3aed;font-weight:700;">· Tita Bhebz</span>' : ''}</div>
+                <div class="bill-item__due">${dueText}</div>
+              </div>
+              <div class="bill-item__amount">${formatPeso(b.amount)}</div>
+            </div>`;
+        }).join('');
       }
 
-      const today = todayKey();
-      container.innerHTML = bills.map(b => {
-        const isOverdue = b.dueDate && b.dueDate < today;
-        return `
-          <div class="bill-item ${isOverdue ? 'bill-item__overdue' : ''}">
-            <div class="bill-item__info">
-              <div class="bill-item__name">${b.name}</div>
-              <div class="bill-item__due">${isOverdue ? '⚠️ Overdue — ' : '📅 Due '}${formatDateLong(b.dueDate)}</div>
-            </div>
-            <div class="bill-item__amount">${formatPeso(b.amount)}</div>
-          </div>`;
-      }).join('');
+      // Tita Bhebz block
+      const bhebzBills = bills.filter(b => b.biller === 'Tita Bhebz');
+      const bhebzBlock  = document.getElementById('bhebzBlock');
+      if (bhebzBills.length) {
+        const total = bhebzBills.reduce((s,b) => s + (parseFloat(b.amount)||0), 0);
+        bhebzBlock.style.display = '';
+        document.getElementById('bhebzDashAmount').textContent = formatPeso(total);
+        document.getElementById('bhebzDashCount').textContent  = `${bhebzBills.length} unpaid bill${bhebzBills.length > 1 ? 's' : ''}`;
+      } else {
+        bhebzBlock.style.display = 'none';
+      }
     }
 
     loadAgenda().catch(console.error);

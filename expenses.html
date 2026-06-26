@@ -6,15 +6,23 @@
   <title>Expenses – GUB Family</title>
   <link rel="stylesheet" href="css/style.css" />
   <style>
-    /* ── Total card ─────────────────────────────────── */
+    /* ── Dashboard cards row ────────────────────────── */
+    .dashboard-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .dashboard-row.single { grid-template-columns: 1fr; }
+
     .total-card {
       background: var(--fg);
       color: var(--white);
       border: 2px solid var(--border);
       border-radius: var(--radius-wobbly-md);
       box-shadow: var(--shadow-hard-lg);
-      padding: 24px 20px;
-      margin-bottom: 20px;
+      padding: 20px 16px;
       position: relative;
       overflow: hidden;
     }
@@ -25,55 +33,82 @@
       inset: 0;
       background-image: radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px);
       background-size: 18px 18px;
+      pointer-events: none;
     }
 
-    .total-card__label {
-      font-size: 0.8rem;
-      opacity: 0.6;
+    .bhebz-card {
+      background: #7c3aed;
+      color: var(--white);
+      border: 2px solid var(--border);
+      border-radius: var(--radius-wobbly-md);
+      box-shadow: var(--shadow-hard-lg);
+      padding: 20px 16px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .bhebz-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px);
+      background-size: 18px 18px;
+      pointer-events: none;
+    }
+
+    .total-card__label, .bhebz-card__label {
+      font-size: 0.72rem;
+      opacity: 0.65;
       text-transform: uppercase;
-      letter-spacing: 0.1em;
+      letter-spacing: 0.08em;
       margin-bottom: 6px;
     }
 
-    .total-card__amount {
+    .total-card__amount, .bhebz-card__amount {
       font-family: var(--font-head);
-      font-size: 2.6rem;
+      font-size: 1.8rem;
       font-weight: 700;
       line-height: 1;
-      margin-bottom: 16px;
+      margin-bottom: 12px;
     }
 
     .total-card__per-person {
       display: flex;
-      gap: 8px;
+      gap: 6px;
       flex-wrap: wrap;
     }
 
     .person-pill {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 5px;
       background: rgba(255,255,255,0.12);
       border: 1px solid rgba(255,255,255,0.2);
       border-radius: 99px;
-      padding: 4px 10px 4px 6px;
-      font-size: 0.78rem;
+      padding: 3px 8px 3px 5px;
+      font-size: 0.7rem;
       font-weight: 600;
     }
 
     .person-pill__dot {
-      width: 16px;
-      height: 16px;
+      width: 14px;
+      height: 14px;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 0.6rem;
+      font-size: 0.55rem;
       font-weight: 700;
       flex-shrink: 0;
     }
 
-    /* ── Section tabs ────────────────────────────────── */
+    .bhebz-card__sub {
+      font-size: 0.75rem;
+      opacity: 0.7;
+      margin-top: 4px;
+    }
+
+    /* ── Tabs ────────────────────────────────────────── */
     .tabs {
       display: flex;
       gap: 0;
@@ -98,11 +133,7 @@
     }
 
     .tab-btn:last-child { border-right: none; }
-
-    .tab-btn.active {
-      background: var(--fg);
-      color: var(--white);
-    }
+    .tab-btn.active { background: var(--fg); color: var(--white); }
 
     /* ── Expense item ────────────────────────────────── */
     .expense-item {
@@ -116,15 +147,15 @@
     .expense-item:last-child { border-bottom: none; }
 
     .expense-item__icon {
-      width: 40px;
-      height: 40px;
+      width: 38px;
+      height: 38px;
       border-radius: 50%;
       background: var(--muted);
       border: 2px solid var(--border);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.1rem;
+      font-size: 1rem;
       flex-shrink: 0;
     }
 
@@ -142,10 +173,7 @@
       margin-top: 2px;
     }
 
-    .expense-item__right {
-      text-align: right;
-      flex-shrink: 0;
-    }
+    .expense-item__right { text-align: right; flex-shrink: 0; }
 
     .expense-item__amount {
       font-family: var(--font-head);
@@ -153,11 +181,7 @@
       font-weight: 700;
     }
 
-    .expense-item__payer {
-      font-size: 0.72rem;
-      opacity: 0.5;
-      margin-top: 2px;
-    }
+    .expense-item__payer { font-size: 0.72rem; opacity: 0.5; margin-top: 2px; }
 
     .expense-item__delete,
     .expense-item__edit {
@@ -173,31 +197,43 @@
     .expense-item__delete:hover { opacity: 1; color: var(--accent); }
     .expense-item__edit:hover   { opacity: 1; }
 
-    /* ── Bill item ───────────────────────────────────── */
+    /* ── Bill row ────────────────────────────────────── */
     .bill-row {
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       gap: 12px;
       padding: 14px 0;
       border-bottom: 1.5px dashed var(--muted);
     }
 
     .bill-row:last-child { border-bottom: none; }
-
     .bill-row__body { flex: 1; min-width: 0; }
 
-    .bill-row__name {
-      font-size: 1rem;
-      font-weight: 600;
+    .bill-row__name { font-size: 1rem; font-weight: 600; }
+
+    .bill-row__biller {
+      display: inline-block;
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 1px 7px;
+      border-radius: 99px;
+      border: 1.5px solid currentColor;
+      margin-top: 3px;
+      color: #7c3aed;
     }
 
-    .bill-row__due {
-      font-size: 0.78rem;
-      opacity: 0.5;
-      margin-top: 2px;
-    }
-
+    .bill-row__due { font-size: 0.78rem; opacity: 0.5; margin-top: 3px; }
     .bill-row__due.overdue { color: var(--accent); opacity: 1; font-weight: 700; }
+    .bill-row__due.no-date { font-style: italic; }
+    .bill-row__notes { font-size: 0.75rem; opacity: 0.45; margin-top: 3px; font-style: italic; }
+
+    .bill-row__actions {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      align-items: flex-end;
+      flex-shrink: 0;
+    }
 
     .bill-row__amount {
       font-family: var(--font-head);
@@ -205,13 +241,6 @@
       font-weight: 700;
       color: var(--accent);
       white-space: nowrap;
-    }
-
-    .bill-row__actions {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      align-items: flex-end;
     }
 
     .mark-paid-btn {
@@ -230,11 +259,7 @@
     .mark-paid-btn:hover { background: #4CAF7D; color: #fff; border-color: #4CAF7D; }
 
     /* ── Bottom actions ──────────────────────────────── */
-    .bottom-actions {
-      display: flex;
-      gap: 10px;
-      margin-top: 24px;
-    }
+    .bottom-actions { display: flex; gap: 10px; margin-top: 24px; }
 
     /* ── Month nav ───────────────────────────────────── */
     .month-nav {
@@ -254,6 +279,14 @@
     }
 
     .month-nav__btn:hover { transform: translate(1px,1px); box-shadow: none; }
+
+    /* ── Mark paid modal receipt preview ─────────────── */
+    .receipt-thumb {
+      max-height: 120px;
+      border-radius: 8px;
+      border: 2px solid var(--border);
+      margin-top: 8px;
+    }
   </style>
 </head>
 <body>
@@ -273,11 +306,19 @@
       <button class="month-nav__btn" id="nextMonth">›</button>
     </div>
 
-    <!-- Total card -->
-    <div class="total-card">
-      <div class="total-card__label">Total expenses this month</div>
-      <div class="total-card__amount" id="totalAmount">₱0.00</div>
-      <div class="total-card__per-person" id="perPersonPills"></div>
+    <!-- Dashboard cards -->
+    <div class="dashboard-row" id="dashboardRow">
+      <div class="total-card">
+        <div class="total-card__label">Total Expenses</div>
+        <div class="total-card__amount" id="totalAmount">₱0.00</div>
+        <div class="total-card__per-person" id="perPersonPills"></div>
+      </div>
+      <div class="bhebz-card" id="bhebzCard" style="display:none;">
+        <div class="bhebz-card__label">Balance to</div>
+        <div style="font-family:var(--font-head);font-size:0.95rem;font-weight:700;margin-bottom:4px;opacity:0.9;">Tita Bhebz</div>
+        <div class="bhebz-card__amount" id="bhebzAmount">₱0.00</div>
+        <div class="bhebz-card__sub" id="bhebzCount">— unpaid bills</div>
+      </div>
     </div>
 
     <!-- Tabs -->
@@ -304,7 +345,7 @@
     <!-- Bottom actions -->
     <div class="bottom-actions">
       <button class="btn" style="flex:1;" id="addExpenseBtn">+ Add Expense</button>
-      <a href="receipts.html" class="btn btn--blue" style="flex:1; text-decoration:none;">🧾 View Receipts</a>
+      <a href="receipts.html" class="btn btn--blue" style="flex:1;text-decoration:none;">🧾 View Receipts</a>
     </div>
   </div>
 
@@ -343,7 +384,7 @@
       <div class="field">
         <label>Receipt photo (optional)</label>
         <input type="file" id="exReceipt" accept="image/*" capture="environment" />
-        <div id="receiptPreview" style="margin-top:8px;"></div>
+        <div id="receiptPreview"></div>
       </div>
       <div class="field">
         <label>Notes (optional)</label>
@@ -362,17 +403,56 @@
       </div>
       <div class="field">
         <label>Bill name</label>
-        <input type="text" id="billName" placeholder="e.g. Meralco, PLDT, Netflix" />
+        <input type="text" id="billName" placeholder="e.g. Meralco, PLDT" />
       </div>
       <div class="field">
         <label>Amount (₱)</label>
         <input type="number" id="billAmount" placeholder="0.00" step="0.01" min="0" />
       </div>
       <div class="field">
+        <label>Biller</label>
+        <select id="billBiller">
+          <option value="">None</option>
+          <option value="Tita Bhebz">Tita Bhebz</option>
+        </select>
+      </div>
+      <div class="field">
         <label>Due date</label>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+          <input type="checkbox" id="billNoDate" style="width:18px;height:18px;cursor:pointer;" />
+          <label for="billNoDate" style="opacity:0.7;font-size:0.9rem;cursor:pointer;margin:0;">No specific due date</label>
+        </div>
         <input type="date" id="billDue" />
       </div>
+      <div class="field">
+        <label>Notes (optional)</label>
+        <textarea id="billNotes" placeholder="e.g. Pay via GCash, bring OR..."></textarea>
+      </div>
       <button class="btn btn--full" id="saveBillBtn">Save Bill ✓</button>
+    </div>
+  </div>
+
+  <!-- Mark as Paid Modal -->
+  <div class="modal-overlay" id="markPaidModal">
+    <div class="modal">
+      <div class="modal__header">
+        <h3 class="modal__title">✅ Mark as Paid</h3>
+        <button class="modal__close" id="closeMarkPaidModal">✕</button>
+      </div>
+      <input type="hidden" id="markPaidId" />
+      <p style="margin-bottom:16px;opacity:0.7;font-size:0.95rem;">
+        Marking <strong id="markPaidName">—</strong> as paid will add it to your total expenses.
+      </p>
+      <div class="field">
+        <label>Date paid</label>
+        <input type="date" id="markPaidDate" />
+      </div>
+      <div class="field">
+        <label>Receipt photo (optional)</label>
+        <input type="file" id="markPaidReceipt" accept="image/*" capture="environment" />
+        <div id="markPaidReceiptPreview"></div>
+      </div>
+      <button class="btn btn--full btn--green" id="confirmMarkPaidBtn">Confirm Paid ✓</button>
     </div>
   </div>
 
@@ -421,7 +501,7 @@
     import { requireAuth, PROFILES } from './js/auth.js';
     import { db } from './js/firebase.js';
     import {
-      collection, addDoc, deleteDoc, updateDoc, doc, getDocs, query, where, orderBy
+      collection, addDoc, deleteDoc, updateDoc, doc, getDocs, query, where, getDoc
     } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
     import { formatPeso, showToast, openModal, closeModal, imageToBase64 } from './js/utils.js';
 
@@ -437,8 +517,7 @@
     const now = new Date();
     let curYear = now.getFullYear();
     let curMonth = now.getMonth();
-    const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    const MONTHS_FULL  = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    const MONTHS_FULL = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
     function updateMonthLabel() {
       document.getElementById('monthLabel').textContent = `${MONTHS_FULL[curMonth]} ${curYear}`;
@@ -446,11 +525,11 @@
 
     document.getElementById('prevMonth').addEventListener('click', () => {
       curMonth--; if (curMonth < 0) { curMonth = 11; curYear--; }
-      updateMonthLabel(); loadExpenses();
+      updateMonthLabel(); loadAll();
     });
     document.getElementById('nextMonth').addEventListener('click', () => {
       curMonth++; if (curMonth > 11) { curMonth = 0; curYear++; }
-      updateMonthLabel(); loadExpenses();
+      updateMonthLabel(); loadAll();
     });
 
     updateMonthLabel();
@@ -461,16 +540,21 @@
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         document.getElementById('tabBreakdown').style.display = btn.dataset.tab === 'breakdown' ? '' : 'none';
-        document.getElementById('tabBills').style.display = btn.dataset.tab === 'bills' ? '' : 'none';
+        document.getElementById('tabBills').style.display     = btn.dataset.tab === 'bills'     ? '' : 'none';
         if (btn.dataset.tab === 'bills') loadBills();
       });
     });
 
+    // ── Load all (expenses + bhebz balance) ──────────────
+    async function loadAll() {
+      await Promise.all([loadExpenses(), loadBhebzBalance()]);
+    }
+
     // ── Load expenses ─────────────────────────────────────
     async function loadExpenses() {
       const startDate = `${curYear}-${String(curMonth+1).padStart(2,'0')}-01`;
-      const lastDay = new Date(curYear, curMonth+1, 0).getDate();
-      const endDate = `${curYear}-${String(curMonth+1).padStart(2,'0')}-${String(lastDay).padStart(2,'0')}`;
+      const lastDay   = new Date(curYear, curMonth+1, 0).getDate();
+      const endDate   = `${curYear}-${String(curMonth+1).padStart(2,'0')}-${String(lastDay).padStart(2,'0')}`;
 
       const snap = await getDocs(query(
         collection(db,'expenses'),
@@ -481,7 +565,7 @@
       const expenses = snap.docs.map(d => ({ id: d.id, ...d.data() }))
         .sort((a,b) => b.date.localeCompare(a.date));
 
-      // Totals
+      // Total (only paid expenses)
       const total = expenses.reduce((s,e) => s + (parseFloat(e.amount) || 0), 0);
       document.getElementById('totalAmount').textContent = formatPeso(total);
 
@@ -491,17 +575,11 @@
         const p = e.paidBy || 'Unknown';
         perPerson[p] = (perPerson[p] || 0) + (parseFloat(e.amount) || 0);
       });
-      const pillsContainer = document.getElementById('perPersonPills');
-      pillsContainer.innerHTML = Object.entries(perPerson).map(([name, amt]) => {
-        const key = name.toLowerCase();
-        const prof = PROFILES[key];
+      document.getElementById('perPersonPills').innerHTML = Object.entries(perPerson).map(([name, amt]) => {
+        const prof  = PROFILES[name.toLowerCase()];
         const color = prof?.color || '#ccc';
         const txt   = prof?.textColor || '#000';
-        return `
-          <div class="person-pill">
-            <div class="person-pill__dot" style="background:${color};color:${txt};">${name[0]}</div>
-            ${name} – ${formatPeso(amt)}
-          </div>`;
+        return `<div class="person-pill"><div class="person-pill__dot" style="background:${color};color:${txt};">${name[0]}</div>${name} – ${formatPeso(amt)}</div>`;
       }).join('');
 
       // Breakdown list
@@ -510,6 +588,8 @@
         list.innerHTML = `<div class="empty"><div class="empty__icon">💸</div><div class="empty__text">No expenses yet this month.</div></div>`;
         return;
       }
+
+      window._expenses = expenses;
 
       list.innerHTML = expenses.map(e => `
         <div class="expense-item">
@@ -523,27 +603,24 @@
             <div class="expense-item__amount">${formatPeso(e.amount)}</div>
             <div class="expense-item__payer">${e.paidBy || '—'}</div>
             <div style="display:flex;gap:6px;justify-content:flex-end;margin-top:4px;">
-              <button class="expense-item__edit" data-id="${e.id}" title="Edit">✏️</button>
-              <button class="expense-item__delete" data-id="${e.id}" title="Delete">🗑</button>
+              <button class="expense-item__edit" data-id="${e.id}">✏️</button>
+              <button class="expense-item__delete" data-id="${e.id}">🗑</button>
             </div>
           </div>
         </div>
       `).join('');
 
-      // Store expenses for edit lookup
-      window._expenses = expenses;
-
       list.querySelectorAll('.expense-item__edit').forEach(btn => {
         btn.addEventListener('click', () => {
           const e = window._expenses.find(x => x.id === btn.dataset.id);
           if (!e) return;
-          document.getElementById('editExId').value      = e.id;
-          document.getElementById('editExName').value    = e.name || '';
-          document.getElementById('editExAmount').value  = e.amount || '';
-          document.getElementById('editExWhere').value   = e.where || '';
-          document.getElementById('editExPaidBy').value  = e.paidBy || 'Gian';
-          document.getElementById('editExDate').value    = e.date || '';
-          document.getElementById('editExNotes').value   = e.notes || '';
+          document.getElementById('editExId').value     = e.id;
+          document.getElementById('editExName').value   = e.name || '';
+          document.getElementById('editExAmount').value = e.amount || '';
+          document.getElementById('editExWhere').value  = e.where || '';
+          document.getElementById('editExPaidBy').value = e.paidBy || 'Gian';
+          document.getElementById('editExDate').value   = e.date || '';
+          document.getElementById('editExNotes').value  = e.notes || '';
           openModal('editExpenseModal');
         });
       });
@@ -553,19 +630,49 @@
           if (!confirm('Delete this expense?')) return;
           await deleteDoc(doc(db,'expenses', btn.dataset.id));
           showToast('Expense deleted');
-          loadExpenses();
+          loadAll();
         });
       });
+    }
+
+    // ── Tita Bhebz running balance ────────────────────────
+    async function loadBhebzBalance() {
+      const snap = await getDocs(collection(db,'bills'));
+      const unpaidBhebz = snap.docs
+        .map(d => ({ id: d.id, ...d.data() }))
+        .filter(b => !b.paid && b.biller === 'Tita Bhebz');
+
+      const total = unpaidBhebz.reduce((s,b) => s + (parseFloat(b.amount) || 0), 0);
+      const card  = document.getElementById('bhebzCard');
+      const row   = document.getElementById('dashboardRow');
+
+      if (!unpaidBhebz.length) {
+        card.style.display = 'none';
+        row.classList.add('single');
+        return;
+      }
+
+      card.style.display = '';
+      row.classList.remove('single');
+      document.getElementById('bhebzAmount').textContent = formatPeso(total);
+      document.getElementById('bhebzCount').textContent  = `${unpaidBhebz.length} unpaid bill${unpaidBhebz.length > 1 ? 's' : ''}`;
     }
 
     // ── Load bills ────────────────────────────────────────
     async function loadBills() {
       const snap = await getDocs(collection(db,'bills'));
-      const bills = snap.docs.map(d => ({ id: d.id, ...d.data() }))
-        .filter(b => !b.paid)
-        .sort((a,b) => (a.dueDate||'').localeCompare(b.dueDate||''));
-
       const today = new Date().toISOString().split('T')[0];
+
+      const bills = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(b => !b.paid);
+
+      // Sort: dated bills first (by date), then no-date bills at bottom
+      bills.sort((a, b) => {
+        if (!a.dueDate && !b.dueDate) return 0;
+        if (!a.dueDate) return 1;
+        if (!b.dueDate) return -1;
+        return a.dueDate.localeCompare(b.dueDate);
+      });
+
       const list = document.getElementById('billsList');
 
       if (!bills.length) {
@@ -573,58 +680,138 @@
         return;
       }
 
+      window._bills = bills;
+
       list.innerHTML = bills.map(b => {
         const overdue = b.dueDate && b.dueDate < today;
+        const noDate  = !b.dueDate;
+        const isBhebz = b.biller === 'Tita Bhebz';
+
+        const dueLabel = noDate
+          ? `<span class="bill-row__due no-date">📌 No due date — pay when possible</span>`
+          : `<span class="bill-row__due${overdue ? ' overdue' : ''}">
+              ${overdue ? '⚠️ Overdue — ' : '📅 Due '}${b.dueDate}
+             </span>`;
+
         return `
           <div class="bill-row">
             <div class="bill-row__body">
               <div class="bill-row__name">${b.name}</div>
-              <div class="bill-row__due${overdue ? ' overdue' : ''}">
-                ${overdue ? '⚠️ Overdue — ' : '📅 Due '}${b.dueDate || '—'}
-              </div>
+              ${isBhebz ? `<div class="bill-row__biller">Tita Bhebz</div>` : ''}
+              ${dueLabel}
+              ${b.notes ? `<div class="bill-row__notes">${b.notes}</div>` : ''}
             </div>
             <div class="bill-row__actions">
               <div class="bill-row__amount">${formatPeso(b.amount)}</div>
-              <button class="mark-paid-btn" data-id="${b.id}">✓ Mark paid</button>
-              <button class="expense-item__delete" data-id="${b.id}" title="Delete bill">🗑</button>
+              <button class="mark-paid-btn" data-id="${b.id}" data-name="${b.name}">✓ Mark paid</button>
+              <button class="expense-item__delete" data-id="${b.id}" title="Delete">🗑</button>
             </div>
           </div>`;
       }).join('');
 
       list.querySelectorAll('.mark-paid-btn').forEach(btn => {
-        btn.addEventListener('click', async () => {
-          await updateDoc(doc(db,'bills',btn.dataset.id), { paid: true });
-          showToast('Bill marked as paid ✅');
-          loadBills();
+        btn.addEventListener('click', () => {
+          document.getElementById('markPaidId').value = btn.dataset.id;
+          document.getElementById('markPaidName').textContent = btn.dataset.name;
+          document.getElementById('markPaidDate').value = today;
+          document.getElementById('markPaidReceipt').value = '';
+          document.getElementById('markPaidReceiptPreview').innerHTML = '';
+          openModal('markPaidModal');
         });
       });
 
       list.querySelectorAll('.expense-item__delete').forEach(btn => {
         btn.addEventListener('click', async () => {
           if (!confirm('Delete this bill?')) return;
-          await deleteDoc(doc(db,'bills',btn.dataset.id));
+          await deleteDoc(doc(db,'bills', btn.dataset.id));
           showToast('Bill deleted');
           loadBills();
+          loadBhebzBalance();
         });
       });
     }
 
+    // ── Mark as Paid ──────────────────────────────────────
+    document.getElementById('closeMarkPaidModal').addEventListener('click', () => closeModal('markPaidModal'));
+    document.getElementById('markPaidModal').addEventListener('click', e => { if (e.target===e.currentTarget) closeModal('markPaidModal'); });
+
+    document.getElementById('markPaidReceipt').addEventListener('change', e => {
+      const file = e.target.files[0];
+      const preview = document.getElementById('markPaidReceiptPreview');
+      if (!file) { preview.innerHTML = ''; return; }
+      const url = URL.createObjectURL(file);
+      preview.innerHTML = `<img src="${url}" class="receipt-thumb" />`;
+    });
+
+    document.getElementById('confirmMarkPaidBtn').addEventListener('click', async () => {
+      const id   = document.getElementById('markPaidId').value;
+      const date = document.getElementById('markPaidDate').value;
+      if (!date) { showToast('Please select a date paid', 'error'); return; }
+
+      const btn = document.getElementById('confirmMarkPaidBtn');
+      btn.disabled = true; btn.textContent = 'Processing…';
+
+      try {
+        // Get bill data
+        const billSnap = await getDoc(doc(db,'bills', id));
+        const bill = { id, ...billSnap.data() };
+
+        // Handle receipt
+        let receiptBase64 = null;
+        const file = document.getElementById('markPaidReceipt').files[0];
+        if (file) {
+          btn.textContent = 'Compressing…';
+          receiptBase64 = await imageToBase64(file);
+          btn.textContent = 'Saving…';
+        }
+
+        // Mark bill as paid
+        await updateDoc(doc(db,'bills', id), {
+          paid: true,
+          paidDate: date,
+          paidBy: user.name,
+        });
+
+        // Add to expenses
+        await addDoc(collection(db,'expenses'), {
+          name:          bill.name + (bill.biller ? ` (${bill.biller})` : ''),
+          amount:        parseFloat(bill.amount) || 0,
+          where:         bill.biller || '',
+          paidBy:        user.name,
+          date,
+          notes:         bill.notes || '',
+          receiptBase64: receiptBase64 || null,
+          fromBill:      true,
+          addedBy:       user.name,
+          createdAt:     new Date().toISOString(),
+        });
+
+        showToast('Bill paid and added to expenses ✅');
+        closeModal('markPaidModal');
+        loadBills();
+        loadAll();
+      } catch(err) {
+        showToast('Failed to save', 'error');
+        console.error(err);
+      } finally {
+        btn.disabled = false; btn.textContent = 'Confirm Paid ✓';
+      }
+    });
+
     // ── Add Expense ───────────────────────────────────────
     document.getElementById('addExpenseBtn').addEventListener('click', () => {
-      document.getElementById('exDate').value = new Date().toISOString().split('T')[0];
+      document.getElementById('exDate').value   = now.toISOString().split('T')[0];
       document.getElementById('exPaidBy').value = user.name;
       openModal('addExpenseModal');
     });
     document.getElementById('closeExpenseModal').addEventListener('click', () => closeModal('addExpenseModal'));
     document.getElementById('addExpenseModal').addEventListener('click', e => { if (e.target===e.currentTarget) closeModal('addExpenseModal'); });
 
-    // Receipt preview
     document.getElementById('exReceipt').addEventListener('change', e => {
       const file = e.target.files[0];
       const preview = document.getElementById('receiptPreview');
       if (!file) { preview.innerHTML = ''; return; }
-      const url = URL.createObjectURL(file);
-      preview.innerHTML = `<img src="${url}" style="max-height:120px;border-radius:8px;border:2px solid var(--border);" />`;
+      preview.innerHTML = `<img src="${URL.createObjectURL(file)}" class="receipt-thumb" />`;
     });
 
     document.getElementById('saveExpenseBtn').addEventListener('click', async () => {
@@ -640,21 +827,21 @@
         let receiptBase64 = null;
         const file = document.getElementById('exReceipt').files[0];
         if (file) {
-          btn.textContent = 'Compressing image…';
+          btn.textContent = 'Compressing…';
           receiptBase64 = await imageToBase64(file);
           btn.textContent = 'Saving…';
         }
 
         await addDoc(collection(db,'expenses'), {
           name,
-          amount: parseFloat(amount),
-          where:  document.getElementById('exWhere').value.trim(),
-          paidBy: document.getElementById('exPaidBy').value,
+          amount:        parseFloat(amount),
+          where:         document.getElementById('exWhere').value.trim(),
+          paidBy:        document.getElementById('exPaidBy').value,
           date,
-          notes:  document.getElementById('exNotes').value.trim(),
+          notes:         document.getElementById('exNotes').value.trim(),
           receiptBase64: receiptBase64 || null,
-          addedBy: user.name,
-          createdAt: new Date().toISOString(),
+          addedBy:       user.name,
+          createdAt:     new Date().toISOString(),
         });
 
         showToast('Expense saved! 💸');
@@ -662,7 +849,7 @@
         ['exName','exAmount','exWhere','exNotes'].forEach(id => document.getElementById(id).value = '');
         document.getElementById('exReceipt').value = '';
         document.getElementById('receiptPreview').innerHTML = '';
-        loadExpenses();
+        loadAll();
       } catch(err) {
         showToast('Failed to save', 'error');
         console.error(err);
@@ -672,31 +859,48 @@
     });
 
     // ── Add Bill ──────────────────────────────────────────
-    document.getElementById('addBillBtn').addEventListener('click', () => openModal('addBillModal'));
+    document.getElementById('addBillBtn').addEventListener('click', () => {
+      document.getElementById('billDue').value   = '';
+      document.getElementById('billNoDate').checked = false;
+      openModal('addBillModal');
+    });
     document.getElementById('closeBillModal').addEventListener('click', () => closeModal('addBillModal'));
     document.getElementById('addBillModal').addEventListener('click', e => { if (e.target===e.currentTarget) closeModal('addBillModal'); });
+
+    document.getElementById('billNoDate').addEventListener('change', e => {
+      document.getElementById('billDue').disabled = e.target.checked;
+      if (e.target.checked) document.getElementById('billDue').value = '';
+    });
 
     document.getElementById('saveBillBtn').addEventListener('click', async () => {
       const name   = document.getElementById('billName').value.trim();
       const amount = document.getElementById('billAmount').value;
+      const noDate = document.getElementById('billNoDate').checked;
       const due    = document.getElementById('billDue').value;
-      if (!name || !due) { showToast('Name and due date are required', 'error'); return; }
+      if (!name) { showToast('Bill name is required', 'error'); return; }
+      if (!noDate && !due) { showToast('Set a due date or check "No specific due date"', 'error'); return; }
 
       const btn = document.getElementById('saveBillBtn');
       btn.disabled = true; btn.textContent = 'Saving…';
       try {
         await addDoc(collection(db,'bills'), {
           name,
-          amount: parseFloat(amount) || 0,
-          dueDate: due,
-          paid: false,
-          addedBy: user.name,
+          amount:    parseFloat(amount) || 0,
+          biller:    document.getElementById('billBiller').value || null,
+          dueDate:   noDate ? null : due,
+          notes:     document.getElementById('billNotes').value.trim(),
+          paid:      false,
+          addedBy:   user.name,
           createdAt: new Date().toISOString(),
         });
         showToast('Bill added! 🧾');
         closeModal('addBillModal');
-        ['billName','billAmount','billDue'].forEach(id => document.getElementById(id).value = '');
+        ['billName','billAmount','billNotes'].forEach(id => document.getElementById(id).value = '');
+        document.getElementById('billBiller').value = '';
+        document.getElementById('billNoDate').checked = false;
+        document.getElementById('billDue').disabled = false;
         loadBills();
+        loadBhebzBalance();
       } catch(err) {
         showToast('Failed to save', 'error');
         console.error(err);
@@ -721,17 +925,17 @@
       try {
         await updateDoc(doc(db,'expenses', id), {
           name,
-          amount:  parseFloat(amount),
-          where:   document.getElementById('editExWhere').value.trim(),
-          paidBy:  document.getElementById('editExPaidBy').value,
+          amount:    parseFloat(amount),
+          where:     document.getElementById('editExWhere').value.trim(),
+          paidBy:    document.getElementById('editExPaidBy').value,
           date,
-          notes:   document.getElementById('editExNotes').value.trim(),
+          notes:     document.getElementById('editExNotes').value.trim(),
           updatedBy: user.name,
           updatedAt: new Date().toISOString(),
         });
         showToast('Expense updated! ✏️');
         closeModal('editExpenseModal');
-        loadExpenses();
+        loadAll();
       } catch(err) {
         showToast('Failed to update', 'error');
         console.error(err);
@@ -741,7 +945,7 @@
     });
 
     // ── Init ──────────────────────────────────────────────
-    loadExpenses();
+    loadAll();
   </script>
 </body>
 </html>
